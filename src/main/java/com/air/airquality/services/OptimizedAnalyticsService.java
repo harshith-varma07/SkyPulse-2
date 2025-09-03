@@ -175,7 +175,7 @@ public class OptimizedAnalyticsService {
             .map(city -> CompletableFuture.runAsync(() -> {
                 try {
                     // Get latest data for city
-                    Optional<AqiData> latestData = aqiDataRepository.findTopByCityOrderByTimestampDesc(city);
+                    Optional<AqiData> latestData = aqiDataRepository.findFirstByCityOrderByTimestampDesc(city);
                     if (latestData.isPresent()) {
                         Map<String, Object> cityInfo = new HashMap<>();
                         AqiData data = latestData.get();

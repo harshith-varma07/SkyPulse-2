@@ -24,7 +24,7 @@ public class AqiService {
     private AqiDataRepository aqiDataRepository;
     
     public AqiResponse getCurrentAqi(String city) {
-        Optional<AqiData> latestData = aqiDataRepository.findTopByCityOrderByTimestampDesc(city);
+        Optional<AqiData> latestData = aqiDataRepository.findFirstByCityOrderByTimestampDesc(city);
         
         if (latestData.isPresent()) {
             return convertToResponse(latestData.get());

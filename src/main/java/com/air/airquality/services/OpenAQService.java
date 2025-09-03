@@ -148,7 +148,7 @@ public class OpenAQService {
         }
         
         // 2. Try database (optimized query)
-        Optional<AqiData> dbData = aqiDataRepository.findTopByCityOrderByTimestampDesc(normalizedCity);
+        Optional<AqiData> dbData = aqiDataRepository.findFirstByCityOrderByTimestampDesc(normalizedCity);
         if (dbData.isPresent() && isRecentData(dbData.get().getTimestamp())) {
             // Cache the database result
             apiCache.put(normalizedCity.toLowerCase(), new CachedAqiData(dbData.get()));
@@ -187,9 +187,14 @@ public class OpenAQService {
 
     public List<String> getAvailableCities() {
         try {
-            List<String> dbCities = aqiDataRepository.findDistinctCities();
-            if (!dbCities.isEmpty()) {
-                return dbCities.stream()
+            // Use pagination for better performance with large datasets
+            org.springframework.data.domain.PageRequest pageRequest = 
+                org.springframework.data.domain.PageRequest.of(0, 100);
+            org.springframework.data.domain.Page<String> cityPage = 
+                aqiDataRepository.findDistinctCities(pageRequest);
+            
+            if (cityPage.hasContent()) {
+                return cityPage.getContent().stream()
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .collect(Collectors.toList());
             }
@@ -252,21 +257,13 @@ public class OpenAQService {
     }
 
     public String getAqiCategory(Integer aqi) {
-        if (aqi <= 50) return "Good";
-        else if (aqi <= 100) return "Moderate";
-        else if (aqi <= 150) return "Unhealthy for Sensitive Groups";
-        else if (aqi <= 200) return "Unhealthy";
-        else if (aqi <= 300) return "Very Unhealthy";
-        else return "Hazardous";
+        if (aqi == null) return "Unknown";
+        return com.air.airquality.util.OptimizedAqiCalculator.getCategoryInfo(aqi).name;
     }
 
     public String getAqiDescription(Integer aqi) {
-        if (aqi <= 50) return "Air quality is good. Ideal for outdoor activities.";
-        else if (aqi <= 100) return "Air quality is acceptable for most people.";
-        else if (aqi <= 150) return "Sensitive groups may experience minor issues.";
-        else if (aqi <= 200) return "Everyone may experience health effects.";
-        else if (aqi <= 300) return "Health alert: everyone may experience serious effects.";
-        else return "Health warning: emergency conditions affect everyone.";
+        if (aqi == null) return "AQI data unavailable";
+        return com.air.airquality.util.OptimizedAqiCalculator.getCategoryInfo(aqi).description;
     }
 
     // Optimized batch processing for scheduled updates with concurrent execution
@@ -448,19 +445,8 @@ public class OpenAQService {
     private Integer calculateAQI(Double pm25) {
         if (pm25 == null || pm25 < 0) return 50;
         
-        // EPA breakpoints for PM2.5
-        double[] breakpoints = {0, 12.0, 35.4, 55.4, 150.4, 250.4, 350.4, 500.4};
-        int[] aqiValues = {0, 50, 100, 150, 200, 300, 400, 500};
-        
-        for (int i = 0; i < breakpoints.length - 1; i++) {
-            if (pm25 >= breakpoints[i] && pm25 <= breakpoints[i + 1]) {
-                return (int) Math.round(
-                    ((aqiValues[i + 1] - aqiValues[i]) / (breakpoints[i + 1] - breakpoints[i])) 
-                    * (pm25 - breakpoints[i]) + aqiValues[i]
-                );
-            }
-        }
-        return 500; // Maximum AQI
+        // Use the optimized AQI calculator
+        return com.air.airquality.util.OptimizedAqiCalculator.calculatePollutantAqi("pm25", pm25);
     }
 
     // Inner class for caching
