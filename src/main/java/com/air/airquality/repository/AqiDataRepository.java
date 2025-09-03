@@ -114,4 +114,8 @@ public interface AqiDataRepository extends JpaRepository<AqiData, Long> {
     // Recent data for hot cache loading
     @Query("SELECT a FROM AqiData a WHERE a.timestamp >= :since ORDER BY a.timestamp DESC")
     List<AqiData> findRecentData(@Param("since") LocalDateTime since);
+    
+    // Count recent data for health checks
+    @Query("SELECT COUNT(a) FROM AqiData a WHERE a.timestamp > :timestamp")
+    long countByTimestampAfter(@Param("timestamp") LocalDateTime timestamp);
 }
