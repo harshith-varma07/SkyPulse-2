@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyPulse - Data Analytics</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div class="floating-particles" id="particles"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-wind"></i> SkyPulse
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="#" class="nav-link active">Analytics</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="setup.html" class="nav-link">Setup</a>
+                <button class="login-btn" onclick="checkAuthAndRedirect()">
+                    <i class="fas fa-user"></i> <span id="userStatus">Login</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page Header -->
+        <div class="hero-section">
+            <h1 class="hero-title">
+                <i class="fas fa-satellite real-time-indicator"></i>
+                Real-Time Air Quality Analytics
+            </h1>
+            <p class="hero-subtitle">
+                Live data visualization advanced analytics and downloadable reports
+            </p>
+            <div class="feature-highlights">
+                <span class="feature-tag">
+                    <i class="fas fa-globe"></i> Real-time Data Analysis
+                </span>
+                <span class="feature-tag">
+                    <i class="fas fa-chart-line"></i> Interactive Charts
+                </span>
+                <span class="feature-tag">
+                    <i class="fas fa-file-pdf"></i> PDF Reports
+                </span>
+            </div>
+        </div>
+
+        <!-- Data Controls -->
+        <div class="card analytics-controls">
+            <h3><i class="fas fa-sliders-h"></i> Data Controls</h3>
+            <div class="controls-grid">
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <select class="form-input" id="citySelect">
+                        <option value="">Select City...</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Mumbai">Mumbai</option>
+                        <option value="Chennai">Chennai</option>
+                        <option value="London">London</option>
+                        <option value="New York">New York</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="datetime-local" class="form-input" id="startDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">End Date</label>
+                    <input type="datetime-local" class="form-input" id="endDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quick Date Ranges</label>
+                    <div class="date-range-buttons">
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(1)">Last 24 Hours</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(3)">Last 3 Days</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(7)">Last 7 Days</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(30)">Last 30 Days</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(90)">Last 90 Days</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(180)">Last 6 Months</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(365)">Last Year</button>
+                        <button type="button" class="btn-secondary date-range-btn" onclick="setDateRange(540)">Last 18 Months</button>
+                    </div>
+                    <div class="date-range-note">
+                        <i class="fas fa-info-circle"></i>
+                        Real-time analytics available up to 18 months for comprehensive analysis
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn-primary" onclick="loadAnalyticsData()">
+                        <i class="fas fa-satellite"></i> Load Real-Time Analytics
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Data Availability Info -->
+            <div id="dataAvailabilityInfo" class="data-availability-info" style="display: none;">
+                <!-- This will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing data analytics...</p>
+        </div>
+
+        <!-- Data Summary -->
+        <div class="card" id="summaryCard" style="display: none;">
+            <h3><i class="fas fa-info-circle"></i> Data Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value" id="totalRecords">0</div>
+                    <div class="summary-label">Total Records</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="avgAQI">0</div>
+                    <div class="summary-label">Average AQI</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="maxAQI">0</div>
+                    <div class="summary-label">Max AQI</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="minAQI">0</div>
+                    <div class="summary-label">Min AQI</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="timePeriod">-</div>
+                    <div class="summary-label">Time Period</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Container -->
+        <div class="charts-container" id="chartsContainer" style="display: none;">
+            
+            <!-- AQI Trend Chart -->
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-line"></i> AQI Trend Over Time</h3>
+                    <div class="chart-controls">
+                        <button class="btn-secondary btn-sm" onclick="exportChart('aqiTrendChart', 'aqi-trend')">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="aqiTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Pollutants Bar Chart -->
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-bar"></i> Average Pollutant Levels</h3>
+                    <div class="chart-controls">
+                        <button class="btn-secondary btn-sm" onclick="exportChart('pollutantsBarChart', 'pollutants-bar')">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="pollutantsBarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- AQI Categories Pie Chart -->
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-pie"></i> AQI Category Distribution</h3>
+                    <div class="chart-controls">
+                        <button class="btn-secondary btn-sm" onclick="exportChart('aqiPieChart', 'aqi-categories')">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="aqiPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Pollution Level Distribution -->
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <h3><i class="fas fa-chart-bar"></i> Pollution Level Distribution</h3>
+                    <div class="chart-controls">
+                        <button class="btn-secondary btn-sm" onclick="exportChart('pollutionDistChart', 'pollution-distribution')">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="pollutionDistChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Section -->
+        <div class="card download-section" id="downloadSection" style="display: none;">
+            <h3><i class="fas fa-download"></i> Download Reports</h3>
+            <p class="download-description">
+                Generate comprehensive reports with charts and analytics for the selected time period.
+            </p>
+            <div class="download-buttons">
+                <button class="btn-primary" onclick="downloadPDFReport()" id="pdfDownloadBtn">
+                    <i class="fas fa-file-pdf"></i> Download PDF Report
+                </button>
+                <button class="btn-secondary" onclick="downloadCSVData()" id="csvDownloadBtn">
+                    <i class="fas fa-file-csv"></i> Download CSV Data
+                </button>
+                <button class="btn-accent" onclick="downloadAllCharts()" id="chartsDownloadBtn">
+                    <i class="fas fa-images"></i> Download All Charts
+                </button>
+            </div>
+            <div class="download-info">
+                <small><i class="fas fa-info-circle"></i> PDF reports include all charts and analytics for the selected period.</small>
+            </div>
+        </div>
+
+        <!-- No Data Message -->
+        <div class="card no-data-message" id="noDataMessage" style="display: none;">
+            <div class="no-data-content">
+                <i class="fas fa-chart-bar fa-3x" style="color: var(--text-secondary); margin-bottom: 1rem;"></i>
+                <h3>No Data Available</h3>
+                <p>No air quality data found for the selected city and time period.</p>
+                <p>Try selecting a different city or adjusting the date range.</p>
+                <button class="btn-primary" onclick="resetFilters()">
+                    <i class="fas fa-refresh"></i> Reset Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4><i class="fas fa-code-branch"></i> Project</h4>
+                <a href="https://github.com/harshith-varma07/AirSight" target="_blank" class="footer-link">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-map-marker-alt"></i> Supported Cities</h4>
+                <div id="supportedCities" class="supported-cities">
+                    <div class="loading-cities">
+                        <i class="fas fa-spinner fa-spin"></i> Loading cities...
+                    </div>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-info"></i> About</h4>
+                <p>Real-time air quality monitoring with advanced analytics</p>
+                <p>&copy; 2025 SkyPulse. Built with Spring Boot & OpenAQ API</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Charts and Analytics JavaScript -->
+    <script src="charts.js"></script>
+    <script src="analytics.js"></script>
+    
+    <style>
+        .analytics-controls {
+            margin-bottom: 2rem;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--neon-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-card {
+            min-height: 400px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-wrapper {
+            height: 350px;
+            position: relative;
+        }
+
+        .chart-controls .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .download-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .download-description {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .download-info {
+            color: var(--text-secondary);
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .no-data-content i {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .download-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</body>
+</html>

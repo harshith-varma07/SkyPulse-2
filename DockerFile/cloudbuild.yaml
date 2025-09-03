@@ -1,0 +1,77 @@
+# Google Cloud Build Configuration for AirSight
+# This file defines the build steps for deploying to Google Cloud Platform
+
+steps:
+  # Step 1: Build the Spring Boot application with Maven
+  - name: 'maven:3.8.6-eclipse-temurin-21'
+    entrypoint: 'mvn'
+    args: 
+      - 'clean'
+      - 'compile' 
+      - 'package'
+      - '-DskipTests'
+    env:
+      - 'MAVEN_OPTS=-Dmaven.repo.local=/workspace/.m2'
+    volumes:
+      - name: 'm2-cache'
+        path: '/workspace/.m2'
+
+  # Step 2: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/airsight:$SHORT_SHA'
+      - '-t' 
+      - 'gcr.io/$PROJECT_ID/airsight:latest'
+      - '.'
+
+  # Step 3: Push Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/airsight'
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'airsight'
+      - '--image=gcr.io/$PROJECT_ID/airsight:$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--set-env-vars=SPRING_PROFILES_ACTIVE=prod'
+      - '--set-env-vars=SPRING_DATASOURCE_URL=jdbc:mysql://CLOUDSQL_CONNECTION_NAME/airsight_db?useSSL=false&serverTimezone=UTC'
+      - '--set-env-vars=SPRING_DATASOURCE_USERNAME=root'
+      - '--set-env-vars=SPRING_DATASOURCE_PASSWORD=Mformysql@12'
+      - '--set-env-vars=OPENAQ_API_KEY=c58344c7a5506265c032b299d490d83ece8e7660567a5b6320e41d16d43fff3e'
+      - '--set-env-vars=TWILIO_ACCOUNT_SID=AC674b1530b78f5afdfea5f8249388b3d3'
+      - '--set-env-vars=TWILIO_AUTH_TOKEN=ee62c7c14a9c30282699e8c44378a47a'
+      - '--set-env-vars=TWILIO_PHONE_NUMBER=+91 9500928399'
+
+# Store build artifacts
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-build-artifacts'
+    paths:
+      - 'target/*.jar'
+
+# Build options for performance
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  
+# Build timeout
+timeout: 1200s
+
+# Substitutions for variables
+substitutions:
+  _REGION: 'us-central1'
+  _SERVICE_NAME: 'airsight'

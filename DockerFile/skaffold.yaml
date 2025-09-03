@@ -1,0 +1,47 @@
+# Skaffold Configuration for AirSight
+# Simplifies development and deployment workflow for Kubernetes
+
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: airsight
+
+build:
+  artifacts:
+    - image: airsight
+      context: .
+      docker:
+        dockerfile: Dockerfile
+  googleCloudBuild:
+    projectId: YOUR_PROJECT_ID
+    diskSizeGb: 100
+    machineType: E2_HIGHCPU_8
+    timeout: 1200s
+
+deploy:
+  kubectl:
+    manifests:
+      - k8s-deployment.yaml
+
+profiles:
+  - name: dev
+    build:
+      local:
+        push: false
+    deploy:
+      kubectl:
+        manifests:
+          - k8s-deployment.yaml
+    activation:
+      - env: ENV=dev
+  
+  - name: prod
+    build:
+      googleCloudBuild:
+        projectId: YOUR_PROJECT_ID
+    deploy:
+      kubectl:
+        manifests:
+          - k8s-deployment.yaml
+    activation:
+      - env: ENV=prod

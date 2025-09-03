@@ -1,0 +1,83 @@
+# .gcloudignore - Files to exclude when deploying to Google Cloud
+# Similar to .gitignore but for Google Cloud deployments
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven build files
+target/
+!target/air-quality-monitoring-*.jar
+
+# Log files
+logs/
+*.log
+
+# Test files
+src/test/
+
+# Development files
+.env
+.env.local
+.env.development
+
+# Docker files for local development
+docker-compose.yaml
+docker-compose.yml
+
+# Documentation
+README.md
+*.md
+
+# CI/CD files not needed for deployment
+.github/
+.gitlab-ci.yml
+
+# Local data
+data/
+
+# Node modules (if any)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE settings
+.settings/
+.project
+.classpath
+
+# MacOS
+.DS_Store
+
+# Windows
+desktop.ini
+
+# Coverage reports
+coverage/
+*.coverage
+
+# Database files
+*.db
+*.sqlite
+
+# Certificate files
+*.pem
+*.key
+*.crt

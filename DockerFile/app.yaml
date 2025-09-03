@@ -1,0 +1,58 @@
+# Google App Engine Configuration for AirSight
+# Alternative deployment option to Cloud Run
+
+runtime: java17
+
+env_variables:
+  SPRING_PROFILES_ACTIVE: "prod"
+  # Database configuration (use Cloud SQL)
+  SPRING_DATASOURCE_URL: "jdbc:mysql://google/airqualitydb?cloudSqlInstance=YOUR_PROJECT_ID:us-central1:airsight-db&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false"
+  SPRING_DATASOURCE_USERNAME: "root"
+  SPRING_DATASOURCE_PASSWORD: "Mformysql@12"
+
+  # External API keys (set these in GCP Secret Manager)
+  OPENAQ_API_KEY: "c58344c7a5506265c032b299d490d83ece8e7660567a5b6320e41d16d43fff3e"
+  TWILIO_ACCOUNT_SID: "AC674b1530b78f5afdfea5f8249388b3d3"
+  TWILIO_AUTH_TOKEN: "ee62c7c14a9c30282699e8c44378a47a"
+  TWILIO_PHONE_NUMBER: "+91 9500928399"
+
+  # Application settings
+  SERVER_PORT: "8080"
+  JAVA_OPTS: "-Xms512m -Xmx1g"
+
+# Resource allocation
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.8
+  target_throughput_utilization: 0.8
+
+# Health check configuration
+readiness_check:
+  path: "/actuator/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+liveness_check:
+  path: "/actuator/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 4
+  success_threshold: 2
+
+# Network configuration
+network:
+  forwarded_ports:
+    - 8080
+
+# Static file handling (for frontend assets)
+handlers:
+  - url: /static
+    static_dir: frontend
+    secure: always
+  
+  - url: /.*
+    script: auto
+    secure: always

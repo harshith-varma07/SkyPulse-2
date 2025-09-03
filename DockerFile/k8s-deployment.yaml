@@ -1,0 +1,174 @@
+# Kubernetes Deployment Configuration for AirSight
+# For Google Kubernetes Engine (GKE) deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airsight-app
+  labels:
+    app: airsight
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: airsight
+  template:
+    metadata:
+      labels:
+        app: airsight
+        version: v1
+    spec:
+      containers:
+      - name: airsight
+        image: gcr.io/YOUR_PROJECT_ID/airsight:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: database-url
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: database-username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: database-password
+        - name: OPENAQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: openaq-api-key
+        - name: TWILIO_ACCOUNT_SID
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: twilio-account-sid
+        - name: TWILIO_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: twilio-auth-token
+        - name: TWILIO_PHONE_NUMBER
+          valueFrom:
+            secretKeyRef:
+              name: airsight-secrets
+              key: twilio-phone-number
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /app/logs
+        - name: data-volume
+          mountPath: /app/data
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: airsight-data-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airsight-service
+  labels:
+    app: airsight
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: airsight
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airsight-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: airsight-secrets
+type: Opaque
+stringData:
+  database-url: "jdbc:mysql://MYSQL_SERVICE_IP:3306/airqualitydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  database-username: "airsight_user"
+  database-password: "your_secure_password_here"
+  openaq-api-key: "c58344c7a5506265c032b299d490d83ece8e7660567a5b6320e41d16d43fff3e"
+  twilio-account-sid: "AC674b1530b78f5afdfea5f8249388b3d3"
+  twilio-auth-token: "ee62c7c14a9c30282699e8c44378a47a"
+  twilio-phone-number: "+91 9500928399"
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airsight-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "airsight-ip"
+    networking.gke.io/managed-certificates: "airsight-ssl-cert"
+spec:
+  rules:
+  - host: airsight.yourdomain.com
+    http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: airsight-service
+            port:
+              number: 80
+
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: airsight-ssl-cert
+spec:
+  domains:
+    - airsight.yourdomain.com
