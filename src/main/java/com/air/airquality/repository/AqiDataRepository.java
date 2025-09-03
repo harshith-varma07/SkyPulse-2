@@ -15,9 +15,8 @@ import java.util.Optional;
 @Repository
 public interface AqiDataRepository extends JpaRepository<AqiData, Long> {
     
-    // Optimized query using compound index on city and timestamp
-    @Query("SELECT a FROM AqiData a WHERE a.city = :city ORDER BY a.timestamp DESC")
-    Optional<AqiData> findTopByCityOrderByTimestampDesc(@Param("city") String city);
+    // Optimized query using compound index on city and timestamp - using Spring Data method naming
+    Optional<AqiData> findFirstByCityOrderByTimestampDesc(String city);
     
     // Efficient paginated query for large datasets
     @Query("SELECT a FROM AqiData a WHERE a.city = :city AND a.timestamp BETWEEN :startDate AND :endDate ORDER BY a.timestamp DESC")
@@ -34,9 +33,13 @@ public interface AqiDataRepository extends JpaRepository<AqiData, Long> {
                                                @Param("startDate") LocalDateTime startDate, 
                                                @Param("endDate") LocalDateTime endDate);
     
-    // Optimized distinct cities query with limit
-    @Query("SELECT DISTINCT a.city FROM AqiData a ORDER BY a.city LIMIT 50")
+    // Optimized distinct cities query - using Spring Data pagination for limit
+    @Query("SELECT DISTINCT a.city FROM AqiData a ORDER BY a.city")
     List<String> findDistinctCities();
+    
+    // Paginated version for better performance with large datasets
+    @Query("SELECT DISTINCT a.city FROM AqiData a ORDER BY a.city")
+    Page<String> findDistinctCities(Pageable pageable);
     
     // City existence check using EXISTS for better performance
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM AqiData a WHERE a.city = :city")

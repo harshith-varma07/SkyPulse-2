@@ -148,7 +148,7 @@ public class OpenAQService {
         }
         
         // 2. Try database (optimized query)
-        Optional<AqiData> dbData = aqiDataRepository.findTopByCityOrderByTimestampDesc(normalizedCity);
+        Optional<AqiData> dbData = aqiDataRepository.findFirstByCityOrderByTimestampDesc(normalizedCity);
         if (dbData.isPresent() && isRecentData(dbData.get().getTimestamp())) {
             // Cache the database result
             apiCache.put(normalizedCity.toLowerCase(), new CachedAqiData(dbData.get()));
@@ -187,9 +187,14 @@ public class OpenAQService {
 
     public List<String> getAvailableCities() {
         try {
-            List<String> dbCities = aqiDataRepository.findDistinctCities();
-            if (!dbCities.isEmpty()) {
-                return dbCities.stream()
+            // Use pagination for better performance with large datasets
+            org.springframework.data.domain.PageRequest pageRequest = 
+                org.springframework.data.domain.PageRequest.of(0, 100);
+            org.springframework.data.domain.Page<String> cityPage = 
+                aqiDataRepository.findDistinctCities(pageRequest);
+            
+            if (cityPage.hasContent()) {
+                return cityPage.getContent().stream()
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .collect(Collectors.toList());
             }
