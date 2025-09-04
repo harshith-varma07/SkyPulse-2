@@ -40,17 +40,17 @@
                 Real-Time Air Quality Analytics
             </h1>
             <p class="hero-subtitle">
-                Live data visualization advanced analytics and downloadable reports
+                Public analytics for everyone • Premium features for registered users
             </p>
             <div class="feature-highlights">
                 <span class="feature-tag">
-                    <i class="fas fa-globe"></i> Real-time Data Analysis
+                    <i class="fas fa-globe"></i> Public Analytics Access
                 </span>
                 <span class="feature-tag">
                     <i class="fas fa-chart-line"></i> Interactive Charts
                 </span>
-                <span class="feature-tag">
-                    <i class="fas fa-file-pdf"></i> PDF Reports
+                <span class="feature-tag premium-feature">
+                    <i class="fas fa-crown"></i> Premium: PDF Reports
                 </span>
             </div>
         </div>
@@ -97,8 +97,12 @@
                 </div>
                 <div class="form-group">
                     <button class="btn-primary" onclick="loadAnalyticsData()">
-                        <i class="fas fa-satellite"></i> Load Real-Time Analytics
+                        <i class="fas fa-satellite"></i> Load Public Analytics
                     </button>
+                    <div class="public-access-note">
+                        <i class="fas fa-info-circle"></i>
+                        Analytics are now publicly accessible - no login required for viewing
+                    </div>
                 </div>
             </div>
             
@@ -207,9 +211,9 @@
 
         <!-- Download Section -->
         <div class="card download-section" id="downloadSection" style="display: none;">
-            <h3><i class="fas fa-download"></i> Download Reports</h3>
+            <h3><i class="fas fa-download"></i> Export Options</h3>
             <p class="download-description">
-                Generate comprehensive reports with charts and analytics for the selected time period.
+                Analytics viewing is free for everyone. Login for premium export features.
             </p>
             <div class="download-buttons">
                 <button class="btn-primary" onclick="downloadPDFReport()" id="pdfDownloadBtn">
@@ -223,7 +227,7 @@
                 </button>
             </div>
             <div class="download-info">
-                <small><i class="fas fa-info-circle"></i> PDF reports include all charts and analytics for the selected period.</small>
+                <small><i class="fas fa-info-circle"></i> Chart downloads are free. PDF and CSV exports require login.</small>
             </div>
         </div>
 
@@ -357,6 +361,21 @@
 
         .download-info {
             color: var(--text-secondary);
+        }
+
+        .premium-feature {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+        }
+        
+        .public-access-note {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(84, 160, 255, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: var(--neon-blue);
+            text-align: center;
         }
 
         .no-data-message {

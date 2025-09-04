@@ -38,29 +38,27 @@ public class PythonAnalyticsController {
     private static final Object setupLock = new Object();
 
     /**
-     * Test endpoint to verify authentication and basic functionality
+     * Test endpoint to verify basic functionality - now publicly accessible
      */
     @GetMapping("/test")
     public ResponseEntity<String> testEndpoint(HttpServletRequest request) {
         try {
             String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("{\"success\": false, \"message\": \"Authentication required to access analytics\"}");
-            }
-            
             String authorization = request.getHeader("Authorization");
+            boolean isAuthenticated = userId != null && !userId.isEmpty();
             
-            logger.info("Test endpoint called - UserId: {}, Authorization present: {}", 
-                       userId, authorization != null ? "Yes" : "No");
+            logger.info("Test endpoint called - UserId: {}, Authorization present: {}, Public access: {}", 
+                       userId, authorization != null ? "Yes" : "No", !isAuthenticated ? "Yes" : "No");
             
             ObjectNode response = objectMapper.createObjectNode();
             response.put("success", true);
-            response.put("message", "Analytics endpoint is working");
-            response.put("userId", userId);
+            response.put("message", "Analytics endpoint is working - now publicly accessible");
+            response.put("isAuthenticated", isAuthenticated);
+            response.put("userId", userId != null ? userId : "anonymous");
             response.put("authProvided", authorization != null);
             response.put("pythonSetupStatus", pythonSetupComplete != null ? pythonSetupComplete.toString() : "not checked");
             response.put("timestamp", LocalDateTime.now().toString());
+            response.put("publicAccess", true);
             
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
@@ -150,6 +148,7 @@ public class PythonAnalyticsController {
      * 1. Statistics generation
      * 2. Chart generation (line chart and histogram)
      * 3. Data availability handling
+     * Now publicly accessible - no authentication required
      */
     @GetMapping("/generate/{city}")
     public ResponseEntity<String> generateAnalytics(
@@ -160,16 +159,11 @@ public class PythonAnalyticsController {
         
         try {
             String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                logger.warn("Analytics request without authentication - denying access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("{\"success\": false, \"message\": \"Authentication required to access analytics\"}");
-            }
-            
             String authorization = request.getHeader("Authorization");
+            boolean isAuthenticated = userId != null && !userId.isEmpty();
             
-            logger.info("Analytics request - City: {}, UserId: {}, Auth: {}", 
-                       city, userId, authorization != null ? "Present" : "Missing");
+            logger.info("Analytics request - City: {}, UserId: {}, Auth: {}, Public access: {}", 
+                       city, userId != null ? userId : "anonymous", authorization != null ? "Present" : "Missing", !isAuthenticated);
 
             logger.info("Generating comprehensive analytics for city: {}, from: {}, to: {}", city, startDate, endDate);
 
@@ -278,6 +272,7 @@ public class PythonAnalyticsController {
 
     /**
      * PDF generation endpoint that automatically calls Python analytics
+     * PREMIUM FEATURE - Authentication required
      */
     @GetMapping("/pdf/{city}")
     public ResponseEntity<byte[]> exportAnalyticsPDFByCity(
@@ -286,12 +281,12 @@ public class PythonAnalyticsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             HttpServletRequest request) {
         
-        // Validate authentication first
+        // Validate authentication first - PDF export is a premium feature
         String userId = request.getHeader("X-User-Id");
         if (userId == null || userId.isEmpty()) {
-            logger.warn("PDF export by city request without authentication - denying access");
+            logger.warn("PDF export by city request without authentication - denying access (premium feature)");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Authentication required to access analytics PDF export".getBytes());
+                    .body("Authentication required to access premium analytics features like PDF export".getBytes());
         }
         
         return exportAnalyticsPDF(city, startDate, endDate, request);
@@ -482,9 +477,9 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                logger.warn("PDF export request without authentication - denying access");
+                logger.warn("PDF export request without authentication - denying access (premium feature)");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Authentication required to access analytics PDF export".getBytes());
+                        .body("Authentication required to access premium analytics features like PDF export".getBytes());
             }
 
             // Set default dates if not provided
@@ -542,11 +537,10 @@ public class PythonAnalyticsController {
         
         try {
             String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                logger.warn("Line chart request without authentication - denying access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Authentication required to access analytics charts");
-            }
+            boolean isAuthenticated = userId != null && !userId.isEmpty();
+            
+            logger.info("Line chart request - City: {}, UserId: {}, Public access: {}", 
+                       city, userId != null ? userId : "anonymous", !isAuthenticated);
 
             // Set default dates if not provided
             if (endDate == null) endDate = LocalDateTime.now();
@@ -590,11 +584,10 @@ public class PythonAnalyticsController {
         
         try {
             String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                logger.warn("Histogram request without authentication - denying access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Authentication required to access analytics charts");
-            }
+            boolean isAuthenticated = userId != null && !userId.isEmpty();
+            
+            logger.info("Histogram request - City: {}, UserId: {}, Public access: {}", 
+                       city, userId != null ? userId : "anonymous", !isAuthenticated);
 
             // Set default dates if not provided
             if (endDate == null) endDate = LocalDateTime.now();
@@ -638,11 +631,10 @@ public class PythonAnalyticsController {
         
         try {
             String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                logger.warn("Stats request without authentication - denying access");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("{\"success\": false, \"message\": \"Authentication required to access analytics\"}");
-            }
+            boolean isAuthenticated = userId != null && !userId.isEmpty();
+            
+            logger.info("Stats request - City: {}, UserId: {}, Public access: {}", 
+                       city, userId != null ? userId : "anonymous", !isAuthenticated);
 
             // Set default dates if not provided
             if (endDate == null) endDate = LocalDateTime.now();
