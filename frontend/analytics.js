@@ -322,12 +322,12 @@ async function loadAnalyticsData() {
             displayRealTimeCharts(data.charts);
             showDownloadSection();
             
-            showNotification(`Real-time analytics generated for ${city} using OpenAQ data`, 'success');
+            showNotification(`Analytics generated for ${city} using database analytics`, 'success');
         } else if (data.dataAvailable === false || data.suggestDataGeneration === true) {
             // Handle case where no historical data is available
             showNoDataMessage();
             showNotification(
-                'No historical data available. Consider generating sample data using the "Generate Sample Data" option from the user menu.',
+                data.message || 'No historical data available. Consider generating sample data or checking the city name.',
                 'warning'
             );
         } else {
@@ -336,8 +336,14 @@ async function loadAnalyticsData() {
         }
         
     } catch (error) {
-        console.error('Error loading real-time analytics data:', error);
-        showNotification('Error loading real-time analytics data. Please try again.', 'error');
+        console.error('Error loading analytics data:', error);
+        
+        // Check if it's a Python environment issue
+        if (error.message && error.message.includes('SERVICE_UNAVAILABLE')) {
+            showNotification('Python analytics environment not ready. Please contact administrator.', 'error');
+        } else {
+            showNotification('Error loading analytics data. Please try again.', 'error');
+        }
         showNoDataMessage();
     } finally {
         showLoading(false);
@@ -981,7 +987,7 @@ async function downloadPDFReport() {
     }
     
     try {
-        showNotification('Generating enhanced PDF report with real-time analytics...', 'info');
+        showNotification('Generating PDF report with database analytics...', 'info');
         
         const response = await fetch(
             `${API_BASE_URL}/analytics/pdf/${encodeURIComponent(analyticsData.city)}?startDate=${encodeURIComponent(analyticsData.startDate)}&endDate=${encodeURIComponent(analyticsData.endDate)}`,
@@ -1005,7 +1011,7 @@ async function downloadPDFReport() {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            showNotification('Real-time analytics PDF report downloaded successfully!', 'success');
+            showNotification('Database analytics PDF report downloaded successfully!', 'success');
         } else {
             throw new Error('PDF generation failed');
         }

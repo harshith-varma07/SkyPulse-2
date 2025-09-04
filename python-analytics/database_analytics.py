@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseAirQualityAnalytics:
     def __init__(self, db_host='localhost', db_port=3306, db_name='air_quality_monitoring', 
-                 db_user='root', db_password=''):
+                 db_user='root', db_password='Mformysql@12'):
         """Initialize the analytics service with database connection"""
         self.db_config = {
             'host': db_host,
