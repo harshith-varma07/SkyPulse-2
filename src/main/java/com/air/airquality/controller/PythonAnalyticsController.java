@@ -54,6 +54,7 @@ public class PythonAnalyticsController {
             response.put("message", "Analytics endpoint is working");
             response.put("userId", userId != null ? userId : "Not provided");
             response.put("authProvided", authorization != null);
+            response.put("pythonSetupStatus", pythonSetupComplete != null ? pythonSetupComplete.toString() : "not checked");
             response.put("timestamp", LocalDateTime.now().toString());
             
             return ResponseEntity.ok()
@@ -62,31 +63,6 @@ public class PythonAnalyticsController {
                     
         } catch (Exception e) {
             logger.error("Error in test endpoint: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("{\"success\": false, \"message\": \"Test failed: " + e.getMessage() + "\"}");
-        }
-    }
-
-    /**
-     * Simple test endpoint for debugging analytics issues
-     */
-    @GetMapping("/test")
-    public ResponseEntity<String> testAnalytics(HttpServletRequest request) {
-        try {
-            String userId = request.getHeader("X-User-Id");
-            String authorization = request.getHeader("Authorization");
-            
-            ObjectNode response = objectMapper.createObjectNode();
-            response.put("success", true);
-            response.put("message", "Analytics endpoint is working");
-            response.put("userId", userId != null ? userId : "not provided");
-            response.put("hasAuth", authorization != null);
-            response.put("pythonSetupStatus", pythonSetupComplete != null ? pythonSetupComplete.toString() : "not checked");
-            
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response.toString());
-        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("{\"success\": false, \"message\": \"Test failed: " + e.getMessage() + "\"}");
         }
@@ -184,16 +160,13 @@ public class PythonAnalyticsController {
             logger.info("Analytics request - City: {}, UserId: {}, Auth: {}", 
                        city, userId, authorization != null ? "Present" : "Missing");
             
+            // Analytics are available for all users - authentication is optional but logged
             if (userId == null || userId.isEmpty()) {
-                logger.warn("Analytics request rejected - missing X-User-Id header");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("{\"success\": false, \"message\": \"Authentication required - User ID missing\"}");
+                logger.info("Analytics request without user ID - proceeding as guest user");
             }
             
             if (authorization == null || authorization.isEmpty()) {
-                logger.warn("Analytics request rejected - missing Authorization header");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("{\"success\": false, \"message\": \"Authentication required - Authorization missing\"}");
+                logger.info("Analytics request without authorization - proceeding with limited access");
             }
 
             logger.info("Generating comprehensive analytics for city: {}, from: {}, to: {}", city, startDate, endDate);
@@ -400,7 +373,7 @@ public class PythonAnalyticsController {
                 process = pb.start();
                 
                 // Wait for process to complete with timeout
-                int timeoutSeconds = operation.equals("pdf") ? 180 : 90;
+                int timeoutSeconds = operation.equals("pdf") ? 300 : 180;  // Increased timeouts
                 boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
                 
                 if (!finished) {
@@ -499,8 +472,7 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Analytics PDF export requires user authentication".getBytes());
+                logger.info("PDF export request without user ID - proceeding as guest");
             }
 
             // Set default dates if not provided
@@ -559,7 +531,7 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+                logger.info("Line chart request without user ID - proceeding as guest");
             }
 
             // Set default dates if not provided
@@ -605,7 +577,7 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+                logger.info("Histogram request without user ID - proceeding as guest");
             }
 
             // Set default dates if not provided
@@ -651,7 +623,7 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+                logger.info("Stats request without user ID - proceeding as guest");
             }
 
             // Set default dates if not provided

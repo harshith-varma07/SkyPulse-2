@@ -11,8 +11,7 @@ seaborn>=0.11.0
 reportlab>=3.6.0
 Pillow>=8.3.0
 
-# Database connectivity
-pymysql>=1.0.0
+# Database connectivity - Updated for H2/SQLite compatibility
 sqlalchemy>=1.4.0
 
 # Additional utilities
