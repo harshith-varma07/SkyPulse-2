@@ -44,6 +44,11 @@ public class PythonAnalyticsController {
     public ResponseEntity<String> testEndpoint(HttpServletRequest request) {
         try {
             String userId = request.getHeader("X-User-Id");
+            if (userId == null || userId.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("{\"success\": false, \"message\": \"Authentication required to access analytics\"}");
+            }
+            
             String authorization = request.getHeader("Authorization");
             
             logger.info("Test endpoint called - UserId: {}, Authorization present: {}", 
@@ -52,7 +57,7 @@ public class PythonAnalyticsController {
             ObjectNode response = objectMapper.createObjectNode();
             response.put("success", true);
             response.put("message", "Analytics endpoint is working");
-            response.put("userId", userId != null ? userId : "Not provided");
+            response.put("userId", userId);
             response.put("authProvided", authorization != null);
             response.put("pythonSetupStatus", pythonSetupComplete != null ? pythonSetupComplete.toString() : "not checked");
             response.put("timestamp", LocalDateTime.now().toString());
@@ -155,19 +160,16 @@ public class PythonAnalyticsController {
         
         try {
             String userId = request.getHeader("X-User-Id");
+            if (userId == null || userId.isEmpty()) {
+                logger.warn("Analytics request without authentication - denying access");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("{\"success\": false, \"message\": \"Authentication required to access analytics\"}");
+            }
+            
             String authorization = request.getHeader("Authorization");
             
             logger.info("Analytics request - City: {}, UserId: {}, Auth: {}", 
                        city, userId, authorization != null ? "Present" : "Missing");
-            
-            // Analytics are available for all users - authentication is optional but logged
-            if (userId == null || userId.isEmpty()) {
-                logger.info("Analytics request without user ID - proceeding as guest user");
-            }
-            
-            if (authorization == null || authorization.isEmpty()) {
-                logger.info("Analytics request without authorization - proceeding with limited access");
-            }
 
             logger.info("Generating comprehensive analytics for city: {}, from: {}, to: {}", city, startDate, endDate);
 
@@ -283,6 +285,14 @@ public class PythonAnalyticsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             HttpServletRequest request) {
+        
+        // Validate authentication first
+        String userId = request.getHeader("X-User-Id");
+        if (userId == null || userId.isEmpty()) {
+            logger.warn("PDF export by city request without authentication - denying access");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Authentication required to access analytics PDF export".getBytes());
+        }
         
         return exportAnalyticsPDF(city, startDate, endDate, request);
     }
@@ -472,7 +482,9 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                logger.info("PDF export request without user ID - proceeding as guest");
+                logger.warn("PDF export request without authentication - denying access");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Authentication required to access analytics PDF export".getBytes());
             }
 
             // Set default dates if not provided
@@ -531,7 +543,9 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                logger.info("Line chart request without user ID - proceeding as guest");
+                logger.warn("Line chart request without authentication - denying access");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Authentication required to access analytics charts");
             }
 
             // Set default dates if not provided
@@ -577,7 +591,9 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                logger.info("Histogram request without user ID - proceeding as guest");
+                logger.warn("Histogram request without authentication - denying access");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Authentication required to access analytics charts");
             }
 
             // Set default dates if not provided
@@ -623,7 +639,9 @@ public class PythonAnalyticsController {
         try {
             String userId = request.getHeader("X-User-Id");
             if (userId == null || userId.isEmpty()) {
-                logger.info("Stats request without user ID - proceeding as guest");
+                logger.warn("Stats request without authentication - denying access");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("{\"success\": false, \"message\": \"Authentication required to access analytics\"}");
             }
 
             // Set default dates if not provided

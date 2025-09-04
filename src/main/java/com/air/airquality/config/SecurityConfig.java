@@ -28,7 +28,7 @@ public class SecurityConfig {
                 // Public API endpoints - no authentication required for development
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/api/aqi/**").permitAll() // Allow all AQI endpoints for development
-                .antMatchers("/api/analytics/**").permitAll() // Allow analytics endpoints for logged-in users
+                .antMatchers("/api/analytics/**").permitAll() // Analytics authentication enforced at controller level
                 .antMatchers("/api/export/**").permitAll()
                 .antMatchers("/api/alerts/**").permitAll() // Allow alerts for testing
                 .antMatchers("/api/users/**").permitAll() // Allow user endpoints for testing
