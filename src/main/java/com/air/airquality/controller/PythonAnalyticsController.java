@@ -373,7 +373,7 @@ public class PythonAnalyticsController {
                 process = pb.start();
                 
                 // Wait for process to complete with timeout
-                int timeoutSeconds = operation.equals("pdf") ? 180 : 90;
+                int timeoutSeconds = operation.equals("pdf") ? 300 : 180;  // Increased timeouts
                 boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
                 
                 if (!finished) {
