@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Analytics Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+        .test-section { background: #16213e; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        button { background: #54a0ff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .result { background: #0f0f23; padding: 10px; border-radius: 5px; margin: 10px 0; white-space: pre-wrap; font-family: monospace; }
+        .success { color: #51cf66; }
+        .error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <h1>Test Analytics Public Access</h1>
+    
+    <div class="test-section">
+        <h3>Test Analytics Test Endpoint (Public)</h3>
+        <button onclick="testAnalyticsEndpoint()">Test /api/analytics/test</button>
+        <div id="testResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Analytics Generation (Public)</h3>
+        <button onclick="testAnalyticsGeneration()">Test /api/analytics/generate/Delhi</button>
+        <div id="generateResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test PDF Download (Should Require Auth)</h3>
+        <button onclick="testPDFDownload()">Test /api/analytics/pdf/Delhi</button>
+        <div id="pdfResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        
+        async function testAnalyticsEndpoint() {
+            try {
+                showResult('testResult', 'Testing analytics endpoint...', '');
+                
+                const response = await fetch(`${API_BASE_URL}/analytics/test`);
+                const data = await response.text();
+                const status = response.ok ? 'success' : 'error';
+                
+                showResult('testResult', 
+                    `Status: ${response.status}\nResponse: ${data}`, status);
+                    
+            } catch (error) {
+                showResult('testResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAnalyticsGeneration() {
+            try {
+                showResult('generateResult', 'Testing generate endpoint...', '');
+                
+                const startDate = '2024-09-01T10:00:00';
+                const endDate = '2024-09-04T10:00:00';
+                
+                const response = await fetch(
+                    `${API_BASE_URL}/analytics/generate/Delhi?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+                );
+                
+                const data = await response.text();
+                const status = response.ok ? 'success' : 'error';
+                
+                showResult('generateResult', 
+                    `Status: ${response.status}\nResponse: ${data.substring(0, 500)}...`, status);
+                    
+            } catch (error) {
+                showResult('generateResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testPDFDownload() {
+            try {
+                showResult('pdfResult', 'Testing PDF download (should fail)...', '');
+                
+                const startDate = '2024-09-01T10:00:00';
+                const endDate = '2024-09-04T10:00:00';
+                
+                const response = await fetch(
+                    `${API_BASE_URL}/analytics/pdf/Delhi?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+                );
+                
+                const data = await response.text();
+                const status = response.status === 401 ? 'success' : 'error';
+                
+                showResult('pdfResult', 
+                    `Status: ${response.status}\nResponse: ${data}`, status);
+                    
+            } catch (error) {
+                showResult('pdfResult', `Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(elementId, text, type) {
+            const element = document.getElementById(elementId);
+            element.className = 'result ' + type;
+            element.textContent = text;
+        }
+    </script>
+</body>
+</html>

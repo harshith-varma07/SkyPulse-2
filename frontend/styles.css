@@ -1128,6 +1128,98 @@ body::before {
     flex-shrink: 0;
 }
 
+/* Analytics Access Card Styles */
+.analytics-access-info {
+    margin-top: 1rem;
+}
+
+.access-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.access-type {
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.access-type.public {
+    border-color: var(--neon-green);
+    background: rgba(0, 255, 136, 0.05);
+}
+
+.access-type.premium {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.access-type:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(84, 160, 255, 0.2);
+}
+
+.access-type i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.access-type.public i {
+    color: var(--neon-green);
+}
+
+.access-type.premium i {
+    color: #ffd700;
+}
+
+.access-type h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.access-type ul {
+    text-align: left;
+    margin: 1rem 0 1.5rem 0;
+    list-style: none;
+    padding: 0;
+}
+
+.access-type ul li {
+    padding: 0.3rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.access-type ul li:before {
+    content: "✓ ";
+    margin-right: 0.5rem;
+}
+
+.access-type.public ul li:before {
+    color: var(--neon-green);
+}
+
+.access-type.premium ul li:before {
+    color: #ffd700;
+}
+
+.public-badge {
+    background: linear-gradient(45deg, var(--neon-green), #51cf66);
+    color: #000;
+    padding: 0.2rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Data availability responsive */
 @media (max-width: 768px) {
     .availability-info {
@@ -1137,5 +1229,18 @@ body::before {
     
     .availability-info i {
         font-size: 0.9rem;
+    }
+    
+    .access-section {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .access-type {
+        padding: 1rem;
+    }
+    
+    .access-type i {
+        font-size: 2rem;
     }
 }

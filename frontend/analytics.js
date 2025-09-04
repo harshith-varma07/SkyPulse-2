@@ -283,27 +283,30 @@ async function loadAnalyticsData() {
         return;
     }
     
-    // Check if user is logged in for analytics access
-    if (!isLoggedIn) {
-        showNotification('Please login to access real-time analytics', 'error');
-        redirectToLogin();
-        return;
+    // Analytics are now publicly accessible - no login required for viewing
+    const isAuthenticated = isLoggedIn;
+    if (!isAuthenticated) {
+        showNotification('Loading public analytics - login for premium features like PDF export', 'info');
     }
     
     showLoading(true);
     hideAllSections();
     
     try {
-        // Use new real-time analytics endpoint
+        // Use real-time analytics endpoint - now public
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add auth headers if user is logged in (for enhanced experience)
+        if (isAuthenticated) {
+            headers['Authorization'] = sessionStorage.getItem('authorization');
+            headers['X-User-Id'] = sessionStorage.getItem('userId');
+        }
+        
         const response = await fetch(
             `${API_BASE_URL}/analytics/generate/${encodeURIComponent(city)}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
-            {
-                headers: {
-                    'Authorization': sessionStorage.getItem('authorization'),
-                    'X-User-Id': sessionStorage.getItem('userId'),
-                    'Content-Type': 'application/json'
-                }
-            }
+            { headers }
         );
         
         const data = await response.json();
@@ -320,9 +323,10 @@ async function loadAnalyticsData() {
             // Display analytics results
             displayRealTimeDataSummary(data);
             displayRealTimeCharts(data.charts);
-            showDownloadSection();
+            showDownloadSection(isAuthenticated); // Pass auth status to control premium features
             
-            showNotification(`Analytics generated for ${city} using database analytics`, 'success');
+            const accessType = isAuthenticated ? 'premium user analytics' : 'public analytics';
+            showNotification(`${accessType} generated for ${city} using database analytics`, 'success');
         } else if (data.dataAvailable === false || data.suggestDataGeneration === true) {
             // Handle case where no historical data is available
             showNoDataMessage();
@@ -872,8 +876,56 @@ function hideAllSections() {
     document.getElementById('noDataMessage').style.display = 'none';
 }
 
-function showDownloadSection() {
-    document.getElementById('downloadSection').style.display = 'block';
+function showDownloadSection(isAuthenticated = false) {
+    const downloadSection = document.getElementById('downloadSection');
+    const pdfBtn = document.getElementById('pdfDownloadBtn');
+    const csvBtn = document.getElementById('csvDownloadBtn');
+    const chartsBtn = document.getElementById('chartsDownloadBtn');
+    
+    if (isAuthenticated) {
+        // Full access for authenticated users
+        pdfBtn.style.display = 'inline-block';
+        csvBtn.style.display = 'inline-block';
+        chartsBtn.style.display = 'inline-block';
+        pdfBtn.disabled = false;
+        csvBtn.disabled = false;
+        chartsBtn.disabled = false;
+        
+        // Update description for premium users
+        document.querySelector('.download-description').innerHTML = 
+            'Generate comprehensive reports with charts and analytics for the selected time period. ' +
+            '<span style="color: var(--neon-green);"><i class="fas fa-crown"></i> Premium Features Available</span>';
+    } else {
+        // Limited access for public users
+        pdfBtn.style.display = 'inline-block';
+        csvBtn.style.display = 'inline-block';
+        chartsBtn.style.display = 'inline-block';
+        pdfBtn.disabled = true;
+        csvBtn.disabled = true;
+        chartsBtn.disabled = false; // Chart downloads available to all
+        
+        // Update button text to indicate login requirement
+        pdfBtn.innerHTML = '<i class="fas fa-lock"></i> PDF Report (Login Required)';
+        csvBtn.innerHTML = '<i class="fas fa-lock"></i> CSV Data (Login Required)';
+        chartsBtn.innerHTML = '<i class="fas fa-images"></i> Download All Charts';
+        
+        // Add login prompt for premium features
+        pdfBtn.onclick = () => {
+            showNotification('Please login to access premium PDF export features', 'info');
+            redirectToLogin();
+        };
+        csvBtn.onclick = () => {
+            showNotification('Please login to access premium CSV export features', 'info');
+            redirectToLogin();
+        };
+        
+        // Update description for public users
+        document.querySelector('.download-description').innerHTML = 
+            'Analytics viewing is free for everyone. ' +
+            '<span style="color: var(--neon-blue);"><i class="fas fa-info-circle"></i> Login for premium export features (PDF, CSV)</span>';
+    }
+    
+    downloadSection.style.display = 'block';
 }
 
 function showNoDataMessage() {
@@ -976,7 +1028,7 @@ function downloadAllCharts() {
 // Download PDF report with real-time analytics and charts
 async function downloadPDFReport() {
     if (!isLoggedIn) {
-        showNotification('Please login to download PDF reports', 'error');
+        showNotification('Please login to download PDF reports - this is a premium feature', 'error');
         redirectToLogin();
         return;
     }
@@ -987,7 +1039,7 @@ async function downloadPDFReport() {
     }
     
     try {
-        showNotification('Generating PDF report with database analytics...', 'info');
+        showNotification('Generating premium PDF report with database analytics...', 'info');
         
         const response = await fetch(
             `${API_BASE_URL}/analytics/pdf/${encodeURIComponent(analyticsData.city)}?startDate=${encodeURIComponent(analyticsData.startDate)}&endDate=${encodeURIComponent(analyticsData.endDate)}`,
@@ -1005,13 +1057,13 @@ async function downloadPDFReport() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `real-time-analytics-${analyticsData.city}-${new Date().toISOString().split('T')[0]}.pdf`;
+            a.download = `premium-analytics-${analyticsData.city}-${new Date().toISOString().split('T')[0]}.pdf`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            showNotification('Database analytics PDF report downloaded successfully!', 'success');
+            showNotification('Premium PDF report downloaded successfully!', 'success');
         } else {
             throw new Error('PDF generation failed');
         }
@@ -1025,7 +1077,7 @@ async function downloadPDFReport() {
 // Download CSV data
 async function downloadCSVData() {
     if (!isLoggedIn) {
-        showNotification('Please login to download CSV data', 'error');
+        showNotification('Please login to download CSV data - this is a premium feature', 'error');
         redirectToLogin();
         return;
     }
@@ -1036,7 +1088,7 @@ async function downloadCSVData() {
     }
     
     try {
-        showNotification('Generating CSV data...', 'info');
+        showNotification('Generating premium CSV data...', 'info');
         
         const response = await fetch(
             `${API_BASE_URL}/export/csv?city=${encodeURIComponent(analyticsData.city)}&startDate=${encodeURIComponent(analyticsData.startDate)}&endDate=${encodeURIComponent(analyticsData.endDate)}`,
@@ -1054,13 +1106,13 @@ async function downloadCSVData() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `air-quality-data-${analyticsData.city}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `premium-air-quality-data-${analyticsData.city}-${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            showNotification('CSV data downloaded successfully!', 'success');
+            showNotification('Premium CSV data downloaded successfully!', 'success');
         } else {
             throw new Error('CSV generation failed');
         }
