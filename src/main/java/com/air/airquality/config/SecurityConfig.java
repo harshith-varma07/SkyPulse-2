@@ -39,6 +39,9 @@ public class SecurityConfig {
                 .antMatchers("/h2-console/**").permitAll()
                 .antMatchers("/actuator/health").permitAll()
                 
+                // Static resources - allow access without authentication
+                .antMatchers("/", "/index.html", "/*.html", "/*.css", "/*.js", "/static/**").permitAll()
+                
                 // Protected endpoints - require JWT authentication
                 .antMatchers("/api/aqi/historical/**").authenticated()
                 .antMatchers("/api/export/**").authenticated()
