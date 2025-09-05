@@ -2,6 +2,7 @@ package com.air.airquality.controller;
 
 import com.air.airquality.services.AqiService;
 import com.air.airquality.services.OpenAQService;
+import com.air.airquality.services.JwtService;
 import com.air.airquality.model.AqiData;
 import com.air.airquality.config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ public class AqiControllerTest {
     
     @MockBean
     private OpenAQService openAQService;
+    
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     public void testGetCitiesEndpoint() throws Exception {
