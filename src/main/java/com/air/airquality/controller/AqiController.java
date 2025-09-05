@@ -19,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.air.airquality.services.JwtService;
+
 @RestController
 @RequestMapping("/api/aqi")
 public class AqiController {
@@ -30,6 +32,9 @@ public class AqiController {
     private AqiService aqiService;
     @Autowired
     private OpenAQService openAQService;
+
+    @Autowired
+    private JwtService jwtService;
     
     // Optimized caching with ConcurrentHashMap for thread safety
     private final Map<String, CachedResponse> cache = new ConcurrentHashMap<>();
@@ -179,22 +184,32 @@ public class AqiController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             HttpServletRequest request) {
-        
-        String userId = request.getHeader("X-User-Id");
-        if (userId == null || userId.isEmpty()) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "Authentication required");
+            response.put("message", "Authentication required: Bearer token missing");
             response.put("requiresAuth", true);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        
+        Long userId;
+        try {
+            String token = authHeader.substring(7);
+            userId = jwtService.getUserIdFromToken(token);
+        } catch (Exception ex) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Invalid or expired token");
+            response.put("requiresAuth", true);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
         try {
             String normalizedCity = normalizeCity(city);
-            
+
             // Get data availability info
             var availabilityInfo = aqiService.getDataAvailabilityInfo(normalizedCity);
-            
+
             if (!availabilityInfo.isHasData()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -203,7 +218,7 @@ public class AqiController {
                 response.put("suggestDataGeneration", true);
                 return ResponseEntity.ok(response);
             }
-            
+
             // Default to available data range if dates not provided
             if (endDate == null) {
                 endDate = availabilityInfo.getNewestDate() != null ? 
@@ -213,7 +228,7 @@ public class AqiController {
                 startDate = availabilityInfo.getOldestDate() != null ? 
                     availabilityInfo.getOldestDate() : endDate.minusDays(90);
             }
-            
+
             // Validate that requested dates are within available data range
             if (availabilityInfo.getOldestDate() != null && startDate.isBefore(availabilityInfo.getOldestDate())) {
                 startDate = availabilityInfo.getOldestDate();
@@ -223,7 +238,7 @@ public class AqiController {
                 endDate = availabilityInfo.getNewestDate();
                 logger.info("Adjusted end date to newest available data: {}", endDate);
             }
-            
+
             // Validate date range to prevent excessive data requests (max 18 months)
             long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
             if (daysBetween > 548) { // 18 months ≈ 548 days
@@ -234,14 +249,14 @@ public class AqiController {
                 response.put("requestedDays", daysBetween);
                 return ResponseEntity.badRequest().body(response);
             }
-            
+
             // Log warning for large ranges
             if (daysBetween > 365) {
                 logger.warn("Large date range requested for city {}: {} days", normalizedCity, daysBetween);
             }
-            
+
             List<AqiResponse> historicalData = aqiService.getHistoricalData(normalizedCity, startDate, endDate);
-            
+
             // Implement data sampling for very large datasets to improve frontend performance
             boolean wasSampled = false;
             if (historicalData.size() > 10000) {
@@ -256,7 +271,7 @@ public class AqiController {
                 wasSampled = true;
                 logger.info("Sampled to {} records for better performance", historicalData.size());
             }
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", historicalData);
@@ -266,7 +281,7 @@ public class AqiController {
             response.put("endDate", endDate);
             response.put("daysCovered", daysBetween);
             response.put("wasSampled", wasSampled);
-            
+
             // Add data availability info to response
             response.put("dataAvailability", Map.of(
                 "oldestDate", availabilityInfo.getOldestDate(),
@@ -274,11 +289,11 @@ public class AqiController {
                 "totalRecords", availabilityInfo.getRecordCount(),
                 "retentionPeriod", "18 months"
             ));
-            
+
             if (wasSampled) {
                 response.put("note", "Large dataset was sampled for optimal performance");
             }
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error fetching historical data for {}: {}", city, e.getMessage());

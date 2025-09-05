@@ -19,124 +19,22 @@ document.addEventListener('DOMContentLoaded', function() {
             isLoggedIn = true;
             console.log('DOMContentLoaded - restored currentUser:', currentUser);
             console.log('DOMContentLoaded - set isLoggedIn to true');
-            
             updateNavbarForLoggedInUser();
-            showHistoricalDataCard();
-            // Ensure PDF reports UI is updated for existing sessions
-            updateReportUI();
-            
-            // Important: Check if sessionStorage auth data is missing and prompt for re-authentication
-            const authHeader = sessionStorage.getItem('authorization');
-            const userId = sessionStorage.getItem('userId');
-            if (!authHeader || !userId) {
-                console.log('DOMContentLoaded - Session authentication data missing - user will need to re-login for premium features');
-                // Note: We don't force login here, but premium features will prompt when needed
-            } else {
-                console.log('DOMContentLoaded - Session authentication data found');
-            }
-        } catch (e) {
-            console.error('DOMContentLoaded - Error parsing saved user:', e);
-            localStorage.removeItem('skyPulseUser');
-        }
-    } else {
-        console.log('DOMContentLoaded - No saved user found');
-    }
-    
-    // Initialize date inputs with default values (removed - no longer needed)
-    
-    loadDashboardData();
-    loadSupportedCities(); // Load footer cities
-    setInterval(loadDashboardData, 300000); // Update every 5 minutes
-});
-
-// Create floating particles animation
-function createParticles() {
-    const particlesContainer = document.getElementById('particles');
-    const particleCount = 50;
-
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 20 + 's';
-        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-        
-        // Random colors
-        const colors = ['var(--neon-blue)', 'var(--neon-purple)', 'var(--neon-green)'];
-        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-        
-        particlesContainer.appendChild(particle);
-    }
-}
-
-// Load dashboard data
-async function loadDashboardData() {
-    showLoading(true);
-    
-    try {
-        // Load available cities first
-        const citiesResponse = await fetch(`${API_BASE_URL}/aqi/cities`);
-        const citiesData = await citiesResponse.json();
-        
-        if (citiesData.success && citiesData.cities && citiesData.cities.length > 0) {
-            // Get AQI data for multiple cities
-            const topCities = citiesData.cities.slice(0, 6); // Get top 6 cities
-            const multiResponse = await fetch(`${API_BASE_URL}/aqi/multiple?${topCities.map(city => `cities=${encodeURIComponent(city)}`).join('&')}`);
-            const multiData = await multiResponse.json();
-            
-            if (multiData.success && multiData.data) {
-                const cities = Object.values(multiData.data).map(cityData => ({
-                    name: cityData.city,
-                    country: '',
-                    aqi: cityData.aqiValue,
-                    category: cityData.category,
-                    coordinates: [0, 0], // We don't have coordinates from backend
-                    pm25: cityData.pm25,
-                    pm10: cityData.pm10,
-                    no2: cityData.no2,
-                    so2: cityData.so2,
-                    co: cityData.co,
-                    o3: cityData.o3
-                }));
-                
-                // Update main AQI with first city
-                if (cities.length > 0) {
-                    updateMainAQI(cities[0]);
-                    updateParameters(cities[0]); // Pass city data with pollutants
-                }
-                
-                updateCityList(cities);
-            }
-        } else {
-            // Fallback to default cities if no cities in database
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            showNotification('Error loading dashboard data. Using fallback data.', 'error');
+            // Use complete fallback
             const fallbackCities = [
                 { name: 'Delhi', country: 'India', aqi: 152, category: 'Moderate', coordinates: [28.6139, 77.2090] },
-                { name: 'Mumbai', country: 'India', aqi: 89, category: 'Moderate', coordinates: [19.0760, 72.8777] },
-                { name: 'Chennai', country: 'India', aqi: 67, category: 'Good', coordinates: [13.0827, 80.2707] },
-                { name: 'London', country: 'UK', aqi: 45, category: 'Good', coordinates: [51.5074, -0.1278] }
+                { name: 'Mumbai', country: 'India', aqi: 89, category: 'Moderate', coordinates: [19.0760, 72.8777] }
             ];
-            
             updateMainAQI(fallbackCities[0]);
             updateCityList(fallbackCities);
             updateParameters(fallbackCities[0]);
+        } finally {
+            showLoading(false);
         }
-        
-    } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        showNotification('Error loading dashboard data. Using fallback data.', 'error');
-        
-        // Use complete fallback
-        const fallbackCities = [
-            { name: 'Delhi', country: 'India', aqi: 152, category: 'Moderate', coordinates: [28.6139, 77.2090] },
-            { name: 'Mumbai', country: 'India', aqi: 89, category: 'Moderate', coordinates: [19.0760, 72.8777] }
-        ];
-        updateMainAQI(fallbackCities[0]);
-        updateCityList(fallbackCities);
-        updateParameters(fallbackCities[0]);
-    } finally {
-        showLoading(false);
     }
-}
 
 // Update main AQI display
 function updateMainAQI(cityData) {
@@ -377,8 +275,7 @@ async function selectCity(city) {
 
 // Modal functions
 function setAlert() {
-    const authHeader = sessionStorage.getItem('authorization');
-    if (!authHeader) {
+    if (!isLoggedIn || !currentUser || !currentUser.token) {
         alert('Please login to set up alerts');
         openModal('loginModal');
         return;
@@ -480,12 +377,12 @@ document.getElementById('alertForm').addEventListener('submit', async function(e
         const response = await fetch(`${API_BASE_URL}/alerts/create?city=${encodeURIComponent(city)}&threshold=${threshold}`, {
             method: 'POST',
             headers: {
-                'X-User-Id': currentUser.id.toString()
+                'Authorization': `Bearer ${currentUser.token}`
             }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             closeModal('alertModal');
             showNotification('Alert settings updated successfully!', 'success');
@@ -649,7 +546,7 @@ async function downloadReport() {
         const response = await fetch(`${API_BASE_URL}/export/pdf?city=${encodeURIComponent(mainCity)}`, {
             method: 'GET',
             headers: {
-                'X-User-Id': currentUser.id.toString()
+                'Authorization': `Bearer ${currentUser.token}`
             }
         });
         
@@ -682,12 +579,12 @@ async function loadUserAlerts() {
     try {
         const response = await fetch(`${API_BASE_URL}/users/alerts`, {
             headers: {
-                'X-User-Id': currentUser.id.toString()
+                'Authorization': `Bearer ${currentUser.token}`
             }
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             updateAlertsList(data.alerts);
         } else {
@@ -752,26 +649,21 @@ async function deleteAlert(alertId) {
 function logout() {
     currentUser = null;
     isLoggedIn = false;
-    
     // Clear stored session
     localStorage.removeItem('skyPulseUser');
-    sessionStorage.removeItem('authorization');
+    sessionStorage.removeItem('jwt');
     sessionStorage.removeItem('userId');
-    
     // Hide historical data card
     hideHistoricalDataCard();
-    
     // Reset navbar
     const loginBtn = document.querySelector('.login-btn');
     loginBtn.innerHTML = '<i class="fas fa-user"></i> Login';
     loginBtn.onclick = () => openModal('loginModal');
-    
     // Remove user menu
     const userMenu = document.querySelector('.user-menu');
     if (userMenu) {
         userMenu.remove();
     }
-    
     // Reset alert list to default
     const alertList = document.getElementById('alertList');
     alertList.innerHTML = `
@@ -781,7 +673,6 @@ function logout() {
             <small>Register to get SMS notifications</small>
         </div>
     `;
-    
     showNotification('Logged out successfully!', 'success');
 }
 
@@ -997,15 +888,14 @@ async function loadHistoricalData() {
             `${API_BASE_URL}/aqi/historical/${encodeURIComponent(currentCity)}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
             {
                 headers: {
-                    'Authorization': authHeader,
-                    'X-User-Id': userId,
+                    'Authorization': `Bearer ${currentUser.token}`,
                     'Content-Type': 'application/json'
                 }
             }
         );
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.data && data.data.length > 0) {
             ChartManager.create(data.data, currentCity);
             const stats = ChartManager.calculateStats(data.data);
@@ -1156,83 +1046,16 @@ async function downloadPDFReport() {
             a.download = `air_quality_report_${currentCity.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
             document.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
 
-            showNotification('PDF report downloaded successfully!', 'success');
+            showNotification('Report downloaded successfully!', 'success');
         } else {
             const errorText = await response.text();
-            console.error('PDF generation failed:', errorText);
-
-            if (response.status === 401) {
-                showNotification('Authentication required. Please login again.', 'error');
-                clearUserSession();
-                updateAuthUI();
-            } else if (response.status === 404) {
-                showNotification('No data found for this city', 'error');
-            } else {
-                showNotification('Failed to generate PDF report: ' + errorText, 'error');
-            }
+            showNotification('Failed to generate report: ' + errorText, 'error');
         }
     } catch (error) {
-        console.error('Error downloading PDF:', error);
-        showNotification('Error downloading PDF report', 'error');
+        console.error('Download error:', error);
+        showNotification('Failed to download report.', 'error');
     }
-}
-
-function getCurrentCity() {
-    // Get the current city from the search input or the currently displayed data
-    const searchInput = document.getElementById('citySearch');
-    if (searchInput && searchInput.value.trim()) {
-        return searchInput.value.trim();
-    }
-    
-    // Try to get from the current air quality card
-    const aqiCard = document.querySelector('.aqi-card');
-    if (aqiCard) {
-        const cityElement = aqiCard.querySelector('h2');
-        if (cityElement) {
-            return cityElement.textContent.trim();
-        }
-    }
-    
-    return null;
-}
-
-// Authentication helper functions
-function getUserSession() {
-    const authHeader = sessionStorage.getItem('authorization');
-    const userId = sessionStorage.getItem('userId');
-    
-    if (authHeader && userId) {
-        // Extract username and password from basic auth header
-        const credentials = atob(authHeader.replace('Basic ', ''));
-        const [username, password] = credentials.split(':');
-        
-        return {
-            id: userId,
-            username: username,
-            password: password,
-            authorization: authHeader
-        };
-    }
-    
-    return null;
-}
-
-function clearUserSession() {
-    sessionStorage.removeItem('authorization');
-    sessionStorage.removeItem('userId');
-}
-
-function updateAuthUI() {
-    // Update the reports UI when authentication state changes
-    updateReportUI();
-    
-    // You can add other UI updates here for other auth-dependent features
-}
-
-// Initialize report UI on page load
-document.addEventListener('DOMContentLoaded', function() {
-    updateReportUI();
-});
+}})

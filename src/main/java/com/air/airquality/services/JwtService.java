@@ -9,7 +9,8 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-    private static final String SECRET_KEY = "ReplaceWithAStrongSecretKey";
+    // Use a secure, random, 32+ character secret key for JWT signing
+    private static final String SECRET_KEY = "mySuperSecretKeyForJWTsThatIsAtLeast32Chars!";
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24 hours
 
     public String generateToken(Long userId, String username) {

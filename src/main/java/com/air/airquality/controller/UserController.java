@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.air.airquality.services.JwtService;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -24,135 +26,136 @@ public class UserController {
     
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private AlertService alertService;
+
+    @Autowired
+    private JwtService jwtService;
     
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(HttpServletRequest request) {
         try {
-            String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "Authentication required");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Authentication required: Bearer token missing"));
             }
-            
-            User user = userService.getUserById(Long.parseLong(userId));
+            String token = authHeader.substring(7);
+            Long userId;
+            try {
+                userId = jwtService.getUserIdFromToken(token);
+            } catch (Exception ex) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Invalid or expired token"));
+            }
+
+            User user = userService.getUserById(userId);
             if (user == null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "User not found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("success", false, "message", "User not found"));
             }
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("user", user);
-            
             return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
             logger.error("Error getting user profile: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Error retrieving user profile");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Error retrieving user profile", "error", e.getMessage()));
         }
     }
     
     @PutMapping("/profile")
     public ResponseEntity<?> updateUserProfile(@RequestBody User updatedUser, HttpServletRequest request) {
         try {
-            String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "Authentication required");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Authentication required: Bearer token missing"));
             }
-            
-            User user = userService.updateUser(Long.parseLong(userId), updatedUser);
-            
+            String token = authHeader.substring(7);
+            Long userId;
+            try {
+                userId = jwtService.getUserIdFromToken(token);
+            } catch (Exception ex) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Invalid or expired token"));
+            }
+
+            User user = userService.updateUser(userId, updatedUser);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Profile updated successfully");
             response.put("user", user);
-            
             return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
             logger.error("Error updating user profile: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Error updating profile");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Error updating profile", "error", e.getMessage()));
         }
     }
     
     @GetMapping("/alerts")
     public ResponseEntity<?> getUserAlerts(HttpServletRequest request) {
         try {
-            String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "Authentication required");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Authentication required: Bearer token missing"));
             }
-            
-            List<UserAlert> alerts = alertService.getUserAlerts(Long.parseLong(userId));
-            
+            String token = authHeader.substring(7);
+            Long userId;
+            try {
+                userId = jwtService.getUserIdFromToken(token);
+            } catch (Exception ex) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Invalid or expired token"));
+            }
+
+            List<UserAlert> alerts = alertService.getUserAlerts(userId);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("alerts", alerts);
             response.put("count", alerts.size());
-            
             return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
             logger.error("Error getting user alerts: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Error retrieving alerts");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Error retrieving alerts", "error", e.getMessage()));
         }
     }
     
     @DeleteMapping("/alerts/{alertId}")
     public ResponseEntity<?> deleteUserAlert(@PathVariable Long alertId, HttpServletRequest request) {
         try {
-            String userId = request.getHeader("X-User-Id");
-            if (userId == null || userId.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "Authentication required");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Authentication required: Bearer token missing"));
             }
-            
-            alertService.deleteUserAlert(alertId, Long.parseLong(userId));
-            
+            String token = authHeader.substring(7);
+            Long userId;
+            try {
+                userId = jwtService.getUserIdFromToken(token);
+            } catch (Exception ex) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Invalid or expired token"));
+            }
+
+            alertService.deleteUserAlert(alertId, userId);
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Alert deleted successfully");
-            
             return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
             logger.error("Error deleting user alert: {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Error deleting alert");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Error deleting alert", "error", e.getMessage()));
         }
     }
 }
