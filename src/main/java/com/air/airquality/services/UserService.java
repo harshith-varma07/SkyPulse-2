@@ -1,6 +1,7 @@
 package com.air.airquality.services;
 
 import com.air.airquality.dto.UserRegistrationRequest;
+import com.air.airquality.dto.CredentialChangeRequest;
 import com.air.airquality.model.User;
 import com.air.airquality.repository.UserRepository;
 import com.air.airquality.validator.UserValidator;
@@ -189,6 +190,75 @@ public class UserService {
         }
     }
     
+    public User updateUserCredentials(Long userId, CredentialChangeRequest request) {
+        logger.info("Updating credentials for user: {}", userId);
+        
+        // Validate current password first
+        User existingUser = getUserById(userId);
+        if (existingUser == null) {
+            throw new RuntimeException("User not found");
+        }
+        
+        // Verify current password
+        if (request.getCurrentPassword() == null || 
+            !passwordEncoder.matches(request.getCurrentPassword(), existingUser.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+        
+        // Update credentials based on what's provided
+        boolean updated = false;
+        
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            // Check for existing email
+            if (userRepository.existsByEmail(request.getEmail()) && 
+                !request.getEmail().equals(existingUser.getEmail())) {
+                throw new RuntimeException("Email already exists");
+            }
+            existingUser.setEmail(request.getEmail());
+            updated = true;
+        }
+        
+        if (request.getNewPassword() != null && !request.getNewPassword().trim().isEmpty()) {
+            // Validate new password strength
+            if (request.getNewPassword().length() < 6) {
+                throw new RuntimeException("New password must be at least 6 characters long");
+            }
+            existingUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            updated = true;
+        }
+        
+        if (request.getPhoneNumber() != null) {
+            existingUser.setPhoneNumber(request.getPhoneNumber());
+            updated = true;
+        }
+        
+        if (request.getCity() != null && !request.getCity().trim().isEmpty()) {
+            existingUser.setCity(request.getCity());
+            updated = true;
+        }
+        
+        if (request.getAlertThreshold() != null) {
+            if (request.getAlertThreshold() < 0 || request.getAlertThreshold() > 500) {
+                throw new RuntimeException("Alert threshold must be between 0 and 500");
+            }
+            existingUser.setAlertThreshold(request.getAlertThreshold());
+            updated = true;
+        }
+        
+        if (!updated) {
+            throw new RuntimeException("No valid credentials provided for update");
+        }
+        
+        existingUser.setUpdatedAt(LocalDateTime.now());
+        User savedUser = userRepository.save(existingUser);
+        
+        // Update cache
+        cacheUser(savedUser);
+        
+        logger.info("Successfully updated credentials for user: {}", userId);
+        return savedUser;
+    }
+
     public void clearCache() {
         userCache.clear();
         usernameCache.clear();
