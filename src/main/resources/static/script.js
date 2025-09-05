@@ -577,14 +577,11 @@ function showUserMenu() {
             <strong>${currentUser.username}</strong><br>
             <small style="color: var(--text-secondary);">${currentUser.email}</small>
         </div>
-        <a href="analytics.html" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
-            <i class="fas fa-chart-bar"></i> Analytics
+        <a href="#" onclick="viewProfile()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
+            <i class="fas fa-user"></i> View Profile
         </a>
-        <a href="#" onclick="seedHistoricalDataFromMenu()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
-            <i class="fas fa-database"></i> Generate Sample Data
-        </a>
-        <a href="#" onclick="viewAlerts()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
-            <i class="fas fa-bell"></i> My Alerts
+        <a href="credentials.html" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
+            <i class="fas fa-cog"></i> Manage Profile
         </a>
         <a href="#" onclick="logout()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
             <i class="fas fa-sign-out-alt"></i> Logout
@@ -1257,8 +1254,14 @@ function showUserMenu() {
             <strong>${currentUser.username}</strong><br>
             <small>${currentUser.email}</small>
         </div>
-        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
-            Logout
+        <a href="#" onclick="viewProfile()" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
+            <i class="fas fa-user"></i> View Profile
+        </a>
+        <a href="credentials.html" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
+            <i class="fas fa-cog"></i> Manage Profile
+        </a>
+        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">
+            <i class="fas fa-sign-out-alt"></i> Logout
         </button>
     `;
     
