@@ -19,7 +19,6 @@
             </div>
             <div class="nav-links">
                 <a href="#" class="nav-link active" onclick="showHome()">Home</a>
-                <a href="analytics.html" class="nav-link">Analytics</a>
                 <a href="about.html" class="nav-link">About</a>
                 <a href="setup.html" class="nav-link">Setup</a>
                 <button class="login-btn" onclick="openModal('loginModal')">
@@ -33,7 +32,7 @@
         <!-- Hero Section -->
         <div class="hero-section">
             <h1 class="hero-title">Real-Time Air Quality Monitoring</h1>
-            <p class="hero-subtitle">Track air pollution levels worldwide with advanced analytics and intelligent alerts</p>
+            <p class="hero-subtitle">Track air pollution levels worldwide with comprehensive reports and intelligent alerts</p>
             
             <div class="search-container">
                 <div class="search-box">
@@ -106,35 +105,35 @@
                 </div>
             </div>
 
-            <!-- Analytics Access Card -->
-            <div class="card" id="analyticsCard">
-                <h3><i class="fas fa-chart-bar"></i> Analytics Access <span class="public-badge">PUBLIC</span></h3>
-                <div class="analytics-access-info">
+            <!-- PDF Reports Access Card -->
+            <div class="card" id="reportsCard">
+                <h3><i class="fas fa-file-pdf"></i> PDF Reports <span class="premium-badge">PREMIUM</span></h3>
+                <div class="reports-access-info">
                     <div class="access-section">
-                        <div class="access-type public">
-                            <i class="fas fa-globe"></i>
-                            <h4>Public Access</h4>
+                        <div class="access-type premium" id="premiumReportSection">
+                            <i class="fas fa-file-alt"></i>
+                            <h4>Air Quality Reports</h4>
+                            <p class="feature-description">Generate comprehensive PDF reports with air quality data, health recommendations, and precautions for any city.</p>
                             <ul>
-                                <li>View all analytics and charts</li>
-                                <li>Real-time data visualization</li>
-                                <li>Download chart images</li>
-                                <li>No registration required</li>
+                                <li>Complete air quality data analysis</li>
+                                <li>Health recommendations based on AQI levels</li>
+                                <li>Safety precautions and guidelines</li>
+                                <li>Statistical summaries and trends</li>
+                                <li>Professional PDF format</li>
                             </ul>
-                            <a href="analytics.html" class="btn-primary">
-                                <i class="fas fa-chart-line"></i> View Analytics
-                            </a>
-                        </div>
-                        <div class="access-type premium" id="premiumSection">
-                            <i class="fas fa-crown"></i>
-                            <h4>Premium Features</h4>
-                            <ul>
-                                <li>PDF report downloads</li>
-                                <li>CSV data exports</li>
-                                <li>Historical data alerts</li>
-                                <li>Extended date ranges</li>
-                            </ul>
-                            <button class="btn-accent" onclick="openModal('loginModal')">
-                                <i class="fas fa-sign-in-alt"></i> Login for Premium
+                            <div class="report-controls" id="reportControls" style="display: none;">
+                                <div class="date-controls">
+                                    <label>Start Date:</label>
+                                    <input type="datetime-local" id="startDate" class="date-input">
+                                    <label>End Date:</label>
+                                    <input type="datetime-local" id="endDate" class="date-input">
+                                </div>
+                                <button class="btn-primary" onclick="downloadPDFReport()">
+                                    <i class="fas fa-download"></i> Download PDF Report
+                                </button>
+                            </div>
+                            <button class="btn-accent" onclick="openModal('loginModal')" id="loginForReports">
+                                <i class="fas fa-sign-in-alt"></i> Login for PDF Reports
                             </button>
                         </div>
                     </div>
@@ -263,7 +262,7 @@
             </div>
             <div class="footer-section">
                 <h4><i class="fas fa-info"></i> About</h4>
-                <p>Real-time air quality monitoring with advanced analytics</p>
+                <p>Real-time air quality monitoring with comprehensive reports</p>
                 <p>&copy; 2025 SkyPulse. Built with Spring Boot & OpenAQ API</p>
             </div>
         </div>

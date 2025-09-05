@@ -1244,3 +1244,71 @@ body::before {
         font-size: 2rem;
     }
 }
+
+/* PDF Reports Styles */
+.reports-access-info {
+    margin-top: 1rem;
+}
+
+.feature-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.report-controls {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+}
+
+.date-input {
+    width: 100%;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+}
+
+.btn-accent {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #1e293b;
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-accent:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+}
+
+/* Responsive adjustments for PDF reports */
+@media (max-width: 768px) {
+    .report-controls {
+        padding: 1rem;
+    }
+    
+    .date-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
