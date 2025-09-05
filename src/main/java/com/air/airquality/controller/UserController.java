@@ -2,6 +2,7 @@ package com.air.airquality.controller;
 
 import com.air.airquality.model.User;
 import com.air.airquality.model.UserAlert;
+import com.air.airquality.dto.CredentialChangeRequest;
 import com.air.airquality.services.UserService;
 import com.air.airquality.services.AlertService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +96,37 @@ public class UserController {
             logger.error("Error updating user profile: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("success", false, "message", "Error updating profile", "error", e.getMessage()));
+        }
+    }
+    
+    @PutMapping("/credentials")
+    public ResponseEntity<?> updateUserCredentials(@RequestBody CredentialChangeRequest request, HttpServletRequest httpRequest) {
+        try {
+            String authHeader = httpRequest.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Authentication required: Bearer token missing"));
+            }
+            String token = authHeader.substring(7);
+            Long userId;
+            try {
+                userId = jwtService.getUserIdFromToken(token);
+            } catch (Exception ex) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Invalid or expired token"));
+            }
+
+            User user = userService.updateUserCredentials(userId, request);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Credentials updated successfully");
+            response.put("user", user);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error updating user credentials: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
     

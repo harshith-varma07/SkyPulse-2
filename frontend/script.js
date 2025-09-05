@@ -628,6 +628,21 @@ function viewAlerts() {
     }
 }
 
+// View profile function
+function viewProfile() {
+    const userMenu = document.querySelector('.user-menu');
+    if (userMenu) {
+        userMenu.remove();
+    }
+    
+    // Show user profile information
+    if (currentUser) {
+        showNotification(`Profile: ${currentUser.username} (${currentUser.email})`, 'info');
+    } else {
+        showNotification('User profile not available', 'error');
+    }
+}
+
 // Download PDF report
 async function downloadReport() {
     if (!isLoggedIn) {
@@ -1257,8 +1272,17 @@ function showUserMenu() {
             <strong>${currentUser.username}</strong><br>
             <small>${currentUser.email}</small>
         </div>
-        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
-            Logout
+        <a href="#" onclick="viewProfile()" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
+            <i class="fas fa-user"></i> View Profile
+        </a>
+        <a href="#" onclick="viewAlerts()" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
+            <i class="fas fa-bell"></i> View Alerts
+        </a>
+        <a href="credentials.html" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
+            <i class="fas fa-cog"></i> Manage Credentials
+        </a>
+        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">
+            <i class="fas fa-sign-out-alt"></i> Logout
         </button>
     `;
     
