@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
             isLoggedIn = true;
             updateNavbarForLoggedInUser();
             showHistoricalDataCard();
+            // Ensure PDF reports UI is updated for existing sessions
+            updateReportUI();
         } catch (e) {
             localStorage.removeItem('skyPulseUser');
         }
@@ -422,11 +424,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             
             // Update UI for logged-in user
             updateNavbarForLoggedInUser();
-            closeModal('loginModal');
-            showNotification(`Welcome back, ${currentUser.username}!`, 'success');
             
-            // Clear form
+            // Update auth-dependent UI components
+            updateReportUI();
+            
+            // Close modal and clean up
+            closeModal('loginModal');
             document.getElementById('loginForm').reset();
+            
+            // Show success message
+            showNotification(`Welcome back, ${currentUser.username}!`, 'success');
             
             // Load user-specific data
             loadUserAlerts();
@@ -926,14 +933,19 @@ setInterval(() => {
 
 // Historical Data Functions
 function showHistoricalDataCard() {
+    // This function is called when user logs in - update all auth-dependent UI
     if (isLoggedIn) {
-        document.getElementById('historicalCard').style.display = 'block';
+        // Update PDF reports UI to show controls instead of login button
+        updateReportUI();
     }
 }
 
 function hideHistoricalDataCard() {
-    document.getElementById('historicalCard').style.display = 'none';
-    ChartManager.destroy();
+    // This function is called when user logs out - hide auth-dependent UI
+    updateReportUI();
+    if (typeof ChartManager !== 'undefined' && ChartManager.destroy) {
+        ChartManager.destroy();
+    }
 }
 
 function initializeDateInputs() {
@@ -1098,7 +1110,10 @@ function updateReportUI() {
     const reportControls = document.getElementById('reportControls');
     const loginForReports = document.getElementById('loginForReports');
     
-    if (userSession && userSession.id) {
+    // Check if user is logged in using either system
+    const isUserLoggedIn = (userSession && userSession.id) || (isLoggedIn && currentUser && currentUser.id);
+    
+    if (isUserLoggedIn) {
         // User is logged in - show report controls
         if (reportControls) reportControls.style.display = 'block';
         if (loginForReports) loginForReports.style.display = 'none';
@@ -1128,10 +1143,31 @@ async function downloadPDFReport() {
     }
     
     const userSession = getUserSession();
-    if (!userSession || !userSession.id) {
+    const isUserLoggedIn = (userSession && userSession.id) || (isLoggedIn && currentUser && currentUser.id);
+    
+    if (!isUserLoggedIn) {
         showNotification('Please login to download PDF reports', 'error');
         openModal('loginModal');
         return;
+    }
+    
+    // Ensure sessionStorage has the authentication data for the API call
+    if (isLoggedIn && currentUser && (!userSession || !userSession.id)) {
+        // Sync sessionStorage with currentUser data if missing
+        const savedUser = localStorage.getItem('skyPulseUser');
+        if (savedUser) {
+            try {
+                const userData = JSON.parse(savedUser);
+                // We need to prompt for password since we can't retrieve it from localStorage
+                showNotification('Please login again to access PDF reports', 'info');
+                openModal('loginModal');
+                return;
+            } catch (e) {
+                showNotification('Authentication error. Please login again.', 'error');
+                openModal('loginModal');
+                return;
+            }
+        }
     }
     
     const startDate = document.getElementById('startDate').value;
