@@ -35,6 +35,103 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoading(false);
         }
     }
+    
+    // Load initial data
+    loadDashboardData();
+});
+
+// Load dashboard data from API
+async function loadDashboardData() {
+    try {
+        showLoading(true);
+        
+        // First get available cities
+        const citiesResponse = await fetch(`${API_BASE_URL}/aqi/cities`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (citiesResponse.ok) {
+            const citiesData = await citiesResponse.json();
+            if (citiesData.success && citiesData.cities && citiesData.cities.length > 0) {
+                // Get data for first few cities
+                const popularCities = citiesData.cities.slice(0, 3); // Take first 3 cities
+                const citiesWithData = [];
+                
+                for (const city of popularCities) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/aqi/current/${city}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.data) {
+                                const cityData = data.data;
+                                citiesWithData.push({
+                                    name: cityData.city,
+                                    country: cityData.city.includes('Delhi') ? 'India' : 
+                                            cityData.city.includes('Beijing') ? 'China' :
+                                            cityData.city.includes('Mumbai') ? 'India' :
+                                            cityData.city.includes('London') ? 'UK' :
+                                            cityData.city.includes('Paris') ? 'France' :
+                                            cityData.city.includes('Tokyo') ? 'Japan' :
+                                            cityData.city.includes('New York') ? 'USA' :
+                                            cityData.city.includes('Sydney') ? 'Australia' :
+                                            cityData.city.includes('Los Angeles') ? 'USA' :
+                                            cityData.city.includes('Chennai') ? 'India' : 'Unknown',
+                                    aqi: cityData.aqiValue,
+                                    category: cityData.category,
+                                    parameters: {
+                                        pm25: cityData.pm25?.toFixed(1),
+                                        pm10: cityData.pm10?.toFixed(1),
+                                        no2: cityData.no2?.toFixed(1),
+                                        o3: cityData.o3?.toFixed(1),
+                                        so2: cityData.so2?.toFixed(1),
+                                        co: cityData.co?.toFixed(1)
+                                    }
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to load data for ${city}:`, error);
+                    }
+                }
+                
+                if (citiesWithData.length > 0) {
+                    updateMainAQI(citiesWithData[0]);
+                    updateCityList(citiesWithData);
+                    updateParameters(citiesWithData[0]);
+                    updateLastUpdated();
+                    return; // Success, exit early
+                }
+            }
+        }
+        
+        throw new Error('No API data available');
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showNotification('Error loading data. Using fallback data.', 'error');
+        
+        // Use fallback data
+        const fallbackCities = [
+            { name: 'Delhi', country: 'India', aqi: 152, category: 'Moderate', parameters: { pm25: 62, pm10: 98, no2: 45, o3: 78 } },
+            { name: 'Mumbai', country: 'India', aqi: 89, category: 'Moderate', parameters: { pm25: 34, pm10: 56, no2: 32, o3: 67 } },
+            { name: 'Beijing', country: 'China', aqi: 178, category: 'Unhealthy', parameters: { pm25: 89, pm10: 145, no2: 67, o3: 89 } }
+        ];
+        updateMainAQI(fallbackCities[0]);
+        updateCityList(fallbackCities);
+        updateParameters(fallbackCities[0]);
+    } finally {
+        showLoading(false);
+    }
+}
 
 // Update main AQI display
 function updateMainAQI(cityData) {
@@ -765,9 +862,9 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Add slide animations to CSS
-const style = document.createElement('style');
-style.textContent = `
+// Add CSS animations
+const dynamicStyle = document.createElement('style');
+dynamicStyle.textContent = `
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
@@ -777,8 +874,19 @@ style.textContent = `
         from { transform: translateX(0); opacity: 1; }
         to { transform: translateX(100%); opacity: 0; }
     }
+    
+    @keyframes float {
+        0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+    
+    .user-menu {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
 `;
-document.head.appendChild(style);
+document.head.appendChild(dynamicStyle);
 
 // Handle Enter key in search
 document.getElementById('citySearch').addEventListener('keypress', function(e) {
@@ -1058,4 +1166,112 @@ async function downloadPDFReport() {
         console.error('Download error:', error);
         showNotification('Failed to download report.', 'error');
     }
-}})
+}
+
+// Create floating particles effect
+function createParticles() {
+    const particlesContainer = document.getElementById('particles');
+    if (!particlesContainer) return;
+    
+    const particleCount = 50;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.cssText = `
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            left: ${Math.random() * 100}%;
+            top: ${Math.random() * 100}%;
+            animation: float ${5 + Math.random() * 10}s linear infinite;
+        `;
+        particlesContainer.appendChild(particle);
+    }
+}
+
+// Get current city for reports
+function getCurrentCity() {
+    const cityElement = document.getElementById('mainCity');
+    if (cityElement && cityElement.textContent) {
+        return cityElement.textContent.split(',')[0].trim();
+    }
+    return 'Delhi'; // Default fallback
+}
+
+// Get user session (compatibility function)
+function getUserSession() {
+    if (currentUser && currentUser.id) {
+        return currentUser;
+    }
+    
+    const savedUser = localStorage.getItem('skyPulseUser');
+    if (savedUser) {
+        try {
+            return JSON.parse(savedUser);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
+
+// Show/hide historical data card
+function showHistoricalDataCard() {
+    // This feature can be implemented later if needed
+    console.log('Historical data card shown for premium user');
+}
+
+function hideHistoricalDataCard() {
+    // This feature can be implemented later if needed
+    console.log('Historical data card hidden');
+}
+
+// User menu functionality
+function showUserMenu() {
+    const existingMenu = document.querySelector('.user-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+        return;
+    }
+    
+    const userMenu = document.createElement('div');
+    userMenu.className = 'user-menu';
+    userMenu.style.cssText = `
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        min-width: 200px;
+        z-index: 1000;
+    `;
+    
+    userMenu.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <strong>${currentUser.username}</strong><br>
+            <small>${currentUser.email}</small>
+        </div>
+        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
+            Logout
+        </button>
+    `;
+    
+    const loginBtn = document.querySelector('.login-btn');
+    loginBtn.style.position = 'relative';
+    loginBtn.appendChild(userMenu);
+}
+
+// Update last updated time
+function updateLastUpdated() {
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    if (lastUpdatedElement) {
+        const now = new Date();
+        lastUpdatedElement.textContent = 'Just now';
+    }
+}
