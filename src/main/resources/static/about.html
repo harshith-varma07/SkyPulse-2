@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About SkyPulse - Fighting Air Pollution</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        /* About page specific styles */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --secondary-gradient: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --light-bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(100, 116, 139, 0.2);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --neon-blue: #0ea5e9;
+            --neon-purple: #8b5cf6;
+            --neon-green: #10b981;
+        }
+
+        body {
+            background: var(--light-bg);
+            color: var(--text-primary);
+        }
+
+        body::before {
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+        }
+
+        .about-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .about-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 4rem;
+            align-items: center;
+        }
+
+        .about-card.reverse {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .about-card.reverse .about-text {
+            order: 2;
+        }
+
+        .about-card.reverse .about-image {
+            order: 1;
+        }
+
+        .about-text h2 {
+            color: var(--neon-blue);
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+        }
+
+        .about-text p {
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .about-image {
+            position: relative;
+        }
+
+        .about-image img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            transition: transform 0.3s ease;
+        }
+
+        .about-image img:hover {
+            transform: scale(1.05);
+        }
+
+        .image-caption {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .pollution-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-box {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-blue);
+        }
+
+        .stat-box h3 {
+            font-size: 2.2rem;
+            color: var(--neon-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .health-impacts {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .impact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .impact-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(10px);
+        }
+
+        .impact-item i {
+            font-size: 1.8rem;
+            color: var(--neon-purple);
+            margin-top: 0.2rem;
+        }
+
+        .impact-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .impact-item p {
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .environmental-list {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+
+        .environmental-list li {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .environmental-list li:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .environmental-list i {
+            color: var(--neon-green);
+            font-size: 1.2rem;
+        }
+
+        .solution-features {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-blue);
+            box-shadow: 0 15px 30px rgba(0, 245, 255, 0.2);
+        }
+
+        .feature-item i {
+            font-size: 2rem;
+            color: var(--neon-blue);
+            margin-top: 0.2rem;
+        }
+
+        .feature-item h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .solution-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .cta-section {
+            text-align: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            margin: 3rem 0;
+        }
+
+        .cta-section h2 {
+            color: var(--neon-blue);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .about-card {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .about-card.reverse .about-text {
+                order: 1;
+            }
+
+            .about-card.reverse .about-image {
+                order: 2;
+            }
+
+            .pollution-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .about-text h2 {
+                font-size: 1.8rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div class="floating-particles" id="particles"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-wind"></i> SkyPulse
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="analytics.html" class="nav-link">Analytics</a>
+                <a href="#" class="nav-link active">About</a>
+                <a href="setup.html" class="nav-link">Setup</a>
+                <button class="login-btn" onclick="openModal('loginModal')">
+                    <i class="fas fa-user"></i> Login
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="hero-title">About Air Pollution & SkyPulse</h1>
+            <p class="hero-subtitle">Understanding the invisible threat and how we're making air quality data accessible to everyone</p>
+        </div>
+
+        <div class="about-content">
+            <!-- Air Pollution Overview -->
+            <div class="about-card">
+                <div class="about-text">
+                    <h2><i class="fas fa-exclamation-triangle"></i> The Air Pollution Crisis</h2>
+                    <p>Air pollution is one of the most pressing environmental health challenges of our time. According to the World Health Organization, <strong>air pollution kills 7 million people worldwide every year</strong>, with 90% of the global population breathing air that exceeds WHO guideline limits.</p>
+                    
+                    <div class="pollution-stats">
+                        <div class="stat-box">
+                            <h3>7 Million</h3>
+                            <p>Annual deaths from air pollution</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>90%</h3>
+                            <p>Of people breathe polluted air</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>$2.9 Trillion</h3>
+                            <p>Annual economic cost globally</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Air Pollution in City" />
+                    <div class="image-caption">Industrial emissions contribute significantly to urban air pollution</div>
+                </div>
+            </div>
+
+            <!-- Health Impact -->
+            <div class="about-card reverse">
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Health Impact" />
+                    <div class="image-caption">Air pollution affects respiratory and cardiovascular health</div>
+                </div>
+                <div class="about-text">
+                    <h2><i class="fas fa-heart-pulse"></i> Major Health Problems</h2>
+                    <p>Air pollution doesn't just affect the environment—it directly threatens human health in multiple ways:</p>
+                    
+                    <div class="health-impacts">
+                        <div class="impact-item">
+                            <i class="fas fa-lungs"></i>
+                            <div>
+                                <h4>Respiratory Diseases</h4>
+                                <p>Asthma, COPD, lung cancer, and reduced lung function</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <i class="fas fa-heartbeat"></i>
+                            <div>
+                                <h4>Cardiovascular Problems</h4>
+                                <p>Heart attacks, strokes, and high blood pressure</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <i class="fas fa-brain"></i>
+                            <div>
+                                <h4>Neurological Effects</h4>
+                                <p>Cognitive decline, dementia, and developmental issues in children</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <i class="fas fa-baby"></i>
+                            <div>
+                                <h4>Pregnancy Complications</h4>
+                                <p>Low birth weight, preterm birth, and developmental delays</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environmental Impact -->
+            <div class="about-card">
+                <div class="about-text">
+                    <h2><i class="fas fa-globe"></i> Environmental Consequences</h2>
+                    <p>Air pollution doesn't stop at human health—it fundamentally alters our planet's climate and ecosystems:</p>
+                    
+                    <ul class="environmental-list">
+                        <li><i class="fas fa-temperature-high"></i> <strong>Climate Change:</strong> Greenhouse gases trap heat, accelerating global warming</li>
+                        <li><i class="fas fa-cloud-rain"></i> <strong>Acid Rain:</strong> Sulfur and nitrogen oxides create acidic precipitation</li>
+                        <li><i class="fas fa-seedling"></i> <strong>Ecosystem Damage:</strong> Pollutants harm plant life and biodiversity</li>
+                        <li><i class="fas fa-eye-slash"></i> <strong>Reduced Visibility:</strong> Smog and haze reduce air quality and visibility</li>
+                        <li><i class="fas fa-water"></i> <strong>Water Contamination:</strong> Airborne pollutants settle in water bodies</li>
+                    </ul>
+                </div>
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1569163139394-de44cb4e4388?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Environmental Impact" />
+                    <div class="image-caption">Pollution affects entire ecosystems and climate patterns</div>
+                </div>
+            </div>
+
+            <!-- SkyPulse Solution -->
+            <div class="about-card reverse solution-card">
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="SkyPulse Solution" />
+                    <div class="image-caption">Real-time data and technology for better air quality monitoring</div>
+                </div>
+                <div class="about-text">
+                    <h2><i class="fas fa-shield-alt"></i> How SkyPulse Protects You</h2>
+                    <p>SkyPulse is our answer to the air pollution crisis. We believe that access to real-time, accurate air quality information is a fundamental right that can save lives and improve public health.</p>
+                    
+                    <div class="solution-features">
+                        <div class="feature-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h4>Real-Time Monitoring</h4>
+                                <p>Live AQI data updated every 5 minutes from global monitoring stations</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-bell"></i>
+                            <div>
+                                <h4>Intelligent Alerts</h4>
+                                <p>Personalized SMS notifications when air quality reaches unhealthy levels</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-chart-line"></i>
+                            <div>
+                                <h4>Historical Analysis</h4>
+                                <p>Track pollution trends and patterns to make informed decisions</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <div>
+                                <h4>Accessible Everywhere</h4>
+                                <p>Free public access with premium features for detailed insights</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <h2>Join the Fight Against Air Pollution</h2>
+                <p>Every person deserves to breathe clean air. Start monitoring your local air quality today and take control of your health.</p>
+                <div class="cta-buttons">
+                    <a href="index.html" class="btn-primary">
+                        <i class="fas fa-home"></i> Start Monitoring
+                    </a>
+                    <button class="btn-secondary" onclick="openModal('registerModal')">
+                        <i class="fas fa-user-plus"></i> Get Premium Alerts
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeModal('loginModal')">&times;</button>
+            <h2>Login to SkyPulse Pro</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Don't have an account? <a href="#" style="color: var(--neon-blue);" onclick="closeModal('loginModal'); openModal('registerModal')">Sign up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeModal('registerModal')">&times;</button>
+            <h2>Register for SkyPulse Pro</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="regPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-input" id="regPhone" placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-input" id="regCity" placeholder="Your city for alerts">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alert Threshold (AQI)</label>
+                    <input type="number" class="form-input" id="regThreshold" value="100" min="0" max="500">
+                    <small style="color: var(--text-secondary);">Get alerts when AQI exceeds this value</small>
+                </div>
+                <button type="submit" class="btn-primary">Create Account</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Already have an account? <a href="#" style="color: var(--neon-blue);" onclick="closeModal('registerModal'); openModal('loginModal')">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4><i class="fas fa-code-branch"></i> Project</h4>
+                <a href="https://github.com/harshith-varma07/AirSight" target="_blank" class="footer-link">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-map-marker-alt"></i> Supported Cities</h4>
+                <div id="supportedCities" class="supported-cities">
+                    <div class="loading-cities">
+                        <i class="fas fa-spinner fa-spin"></i> Loading cities...
+                    </div>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-info"></i> About</h4>
+                <p>Real-time air quality monitoring with advanced analytics</p>
+                <p>&copy; 2025 SkyPulse. Built with Spring Boot & OpenAQ API</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="charts.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        // Initialize particles for the about page
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            loadSupportedCities(); // Load footer cities
+            
+            // Check for existing user session
+            const savedUser = localStorage.getItem('skyPulseUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    isLoggedIn = true;
+                    updateNavbarForLoggedInUser();
+                } catch (e) {
+                    localStorage.removeItem('skyPulseUser');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

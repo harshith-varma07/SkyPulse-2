@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyPulse - Air Quality Monitor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div class="floating-particles" id="particles"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-wind"></i> SkyPulse
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active" onclick="showHome()">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="setup.html" class="nav-link">Setup</a>
+                <button class="login-btn" onclick="openModal('loginModal')">
+                    <i class="fas fa-user"></i> Login
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="hero-title">Real-Time Air Quality Monitoring</h1>
+            <p class="hero-subtitle">Track air pollution levels worldwide with comprehensive reports and intelligent alerts</p>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="Search city or location..." id="citySearch">
+                    <button class="search-btn" onclick="searchCity()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Fetching latest air quality data...</p>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid" id="dashboard">
+            <!-- Primary AQI Card -->
+            <div class="card">
+                <div class="aqi-display">
+                    <div class="progress-ring">
+                        <svg>
+                            <circle class="progress-bg" cx="100" cy="100" r="90"></circle>
+                            <circle class="progress-fill" cx="100" cy="100" r="90" id="aqiProgress"></circle>
+                        </svg>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <div class="aqi-value aqi-good" id="mainAqi">152</div>
+                            <div class="aqi-category" id="mainCategory">Moderate</div>
+                        </div>
+                    </div>
+                    <h3 id="mainCity">Delhi, India</h3>
+                    <p>Last updated: <span id="lastUpdated">2 minutes ago</span></p>
+                </div>
+            </div>
+
+            <!-- Parameters Card -->
+            <div class="card">
+                <h3><i class="fas fa-chart-line"></i> Air Quality Parameters</h3>
+                <div class="parameters-grid" id="parametersGrid">
+                    <div class="parameter-item">
+                        <div class="parameter-name">PM2.5</div>
+                        <div class="parameter-value" style="color: var(--neon-blue);">Loading...</div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary);">µg/m³</div>
+                    </div>
+                    <div class="parameter-item">
+                        <div class="parameter-name">PM10</div>
+                        <div class="parameter-value" style="color: var(--neon-green);">Loading...</div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary);">µg/m³</div>
+                    </div>
+                    <div class="parameter-item">
+                        <div class="parameter-name">NO2</div>
+                        <div class="parameter-value" style="color: var(--neon-purple);">Loading...</div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary);">µg/m³</div>
+                    </div>
+                    <div class="parameter-item">
+                        <div class="parameter-name">O3</div>
+                        <div class="parameter-value" style="color: #ffff00;">Loading...</div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary);">µg/m³</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trending Cities -->
+            <div class="card">
+                <h3><i class="fas fa-globe"></i> Global Air Quality</h3>
+                <div class="city-list" id="cityList">
+                    <!-- Cities will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- PDF Reports Access Card -->
+            <div class="card" id="reportsCard">
+                <h3><i class="fas fa-file-pdf"></i> PDF Reports <span class="premium-badge">PREMIUM</span></h3>
+                <div class="reports-access-info">
+                    <div class="access-section">
+                        <div class="access-type premium" id="premiumReportSection">
+                            <i class="fas fa-file-alt"></i>
+                            <h4>Air Quality Reports</h4>
+                            <p class="feature-description">Generate comprehensive PDF reports with air quality data, health recommendations, and precautions for any city.</p>
+                            <ul>
+                                <li>Complete air quality data analysis</li>
+                                <li>Health recommendations based on AQI levels</li>
+                                <li>Safety precautions and guidelines</li>
+                                <li>Statistical summaries and trends</li>
+                                <li>Professional PDF format</li>
+                            </ul>
+                            <div class="report-controls" id="reportControls" style="display: none;">
+                                <button class="btn-primary" onclick="downloadPDFReport()">
+                                    <i class="fas fa-download"></i> Download Complete PDF Report
+                                </button>
+                                <p class="report-info">This will generate a PDF with all available air quality data for the selected city.</p>
+                            </div>
+                            <button class="btn-accent" onclick="openModal('loginModal')" id="loginForReports">
+                                <i class="fas fa-sign-in-alt"></i> Login for PDF Reports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="card">
+                <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
+                <div class="alert-list" id="alertList">
+                    <div class="alert-item">
+                        <strong>Mumbai, India</strong><br>
+                        AQI exceeded threshold (150+)<br>
+                        <small>15 minutes ago</small>
+                    </div>
+                    <div class="alert-item">
+                        <strong>Beijing, China</strong><br>
+                        Poor air quality detected<br>
+                        <small>1 hour ago</small>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="setAlert()" style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Set New Alert
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeModal('loginModal')">&times;</button>
+            <h2>Login to SkyPulse Pro</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Don't have an account? <a href="#" style="color: var(--neon-blue);" onclick="closeModal('loginModal'); openModal('registerModal')">Sign up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeModal('registerModal')">&times;</button>
+            <h2>Register for SkyPulse Pro</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="regPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-input" id="regPhone" placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-input" id="regCity" placeholder="Your city for alerts">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alert Threshold (AQI)</label>
+                    <input type="number" class="form-input" id="regThreshold" value="100" min="0" max="500">
+                    <small style="color: var(--text-secondary);">Get alerts when AQI exceeds this value</small>
+                </div>
+                <button type="submit" class="btn-primary">Create Account</button>
+            </form>
+            <p style="text-align: center; margin-top: 1rem;">
+                Already have an account? <a href="#" style="color: var(--neon-blue);" onclick="closeModal('registerModal'); openModal('loginModal')">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Alert Setup Modal -->
+    <div class="modal" id="alertModal">
+        <div class="modal-content">
+            <button class="close" onclick="closeModal('alertModal')">&times;</button>
+            <h2>Set Up Air Quality Alert</h2>
+            <form id="alertForm">
+                <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-input" id="alertCity" placeholder="Enter city name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">AQI Threshold</label>
+                    <input type="number" class="form-input" id="alertThreshold" placeholder="e.g., 150" min="0" max="500" required>
+                    <small style="color: var(--text-secondary);">Get SMS alerts when AQI exceeds this value</small>
+                </div>
+                <button type="submit" class="btn-primary">Update Alert Settings</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4><i class="fas fa-code-branch"></i> Project</h4>
+                <a href="https://github.com/harshith-varma07/AirSight" target="_blank" class="footer-link">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-map-marker-alt"></i> Supported Cities</h4>
+                <div id="supportedCities" class="supported-cities">
+                    <div class="loading-cities">
+                        <i class="fas fa-spinner fa-spin"></i> Loading cities...
+                    </div>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-info"></i> About</h4>
+                <p>Real-time air quality monitoring with comprehensive reports</p>
+                <p>&copy; 2025 SkyPulse. Built with Spring Boot & OpenAQ API</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="charts.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

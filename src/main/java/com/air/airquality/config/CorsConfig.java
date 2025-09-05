@@ -16,13 +16,13 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow all origins for development
+        // Allow specific origins including file protocol for local access
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        
-        // Allow specific origins including file protocol
         configuration.setAllowedOrigins(Arrays.asList(
-            "https://harshith-varma07.github.io" ,
-            "https://harshith-varma07.github.io/AirSight"// This allows file:// protocol access
+            "http://localhost:8080",
+            "http://127.0.0.1:5500",
+            "https://harshith-varma07.github.io",
+            "https://harshith-varma07.github.io/AirSight"
         ));
         
         // Allow all HTTP methods
@@ -33,8 +33,8 @@ public class CorsConfig {
         // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
         
-        // Allow credentials
-        configuration.setAllowCredentials(true);
+        // Allow credentials only for same-origin requests
+        configuration.setAllowCredentials(false);
         
         // Expose common headers
         configuration.setExposedHeaders(Arrays.asList(
