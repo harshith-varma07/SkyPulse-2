@@ -122,15 +122,10 @@
                                 <li>Professional PDF format</li>
                             </ul>
                             <div class="report-controls" id="reportControls" style="display: none;">
-                                <div class="date-controls">
-                                    <label>Start Date:</label>
-                                    <input type="datetime-local" id="startDate" class="date-input">
-                                    <label>End Date:</label>
-                                    <input type="datetime-local" id="endDate" class="date-input">
-                                </div>
                                 <button class="btn-primary" onclick="downloadPDFReport()">
-                                    <i class="fas fa-download"></i> Download PDF Report
+                                    <i class="fas fa-download"></i> Download Complete PDF Report
                                 </button>
+                                <p class="report-info">This will generate a PDF with all available air quality data for the selected city.</p>
                             </div>
                             <button class="btn-accent" onclick="openModal('loginModal')" id="loginForReports">
                                 <i class="fas fa-sign-in-alt"></i> Login for PDF Reports

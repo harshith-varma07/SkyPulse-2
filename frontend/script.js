@@ -9,21 +9,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for existing user session
     const savedUser = localStorage.getItem('skyPulseUser');
+    console.log('DOMContentLoaded - savedUser from localStorage:', savedUser);
+    console.log('DOMContentLoaded - sessionStorage auth:', sessionStorage.getItem('authorization'));
+    console.log('DOMContentLoaded - sessionStorage userId:', sessionStorage.getItem('userId'));
+    
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
             isLoggedIn = true;
+            console.log('DOMContentLoaded - restored currentUser:', currentUser);
+            console.log('DOMContentLoaded - set isLoggedIn to true');
+            
             updateNavbarForLoggedInUser();
             showHistoricalDataCard();
             // Ensure PDF reports UI is updated for existing sessions
             updateReportUI();
+            
+            // Important: Check if sessionStorage auth data is missing and prompt for re-authentication
+            const authHeader = sessionStorage.getItem('authorization');
+            const userId = sessionStorage.getItem('userId');
+            if (!authHeader || !userId) {
+                console.log('DOMContentLoaded - Session authentication data missing - user will need to re-login for premium features');
+                // Note: We don't force login here, but premium features will prompt when needed
+            } else {
+                console.log('DOMContentLoaded - Session authentication data found');
+            }
         } catch (e) {
+            console.error('DOMContentLoaded - Error parsing saved user:', e);
             localStorage.removeItem('skyPulseUser');
         }
+    } else {
+        console.log('DOMContentLoaded - No saved user found');
     }
     
-    // Initialize date inputs with default values
-    initializeDateInputs();
+    // Initialize date inputs with default values (removed - no longer needed)
     
     loadDashboardData();
     loadSupportedCities(); // Load footer cities
@@ -410,34 +429,32 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 username: data.username,
                 email: data.email,
                 city: data.city,
-                alertThreshold: data.alertThreshold
+                alertThreshold: data.alertThreshold,
+                token: data.token // Store JWT
             };
             isLoggedIn = true;
-            
-            // Store user session and auth headers
+
+            // Store user session and JWT
             localStorage.setItem('skyPulseUser', JSON.stringify(currentUser));
-            
-            // Store authentication headers for API calls
-            const authHeader = `Basic ${btoa(username + ':' + password)}`;
-            sessionStorage.setItem('authorization', authHeader);
+            sessionStorage.setItem('jwt', data.token);
             sessionStorage.setItem('userId', data.userId.toString());
-            
+
             // Update UI for logged-in user
             updateNavbarForLoggedInUser();
-            
+
             // Update auth-dependent UI components
             updateReportUI();
-            
+
             // Close modal and clean up
             closeModal('loginModal');
             document.getElementById('loginForm').reset();
-            
+
             // Show success message
             showNotification(`Welcome back, ${currentUser.username}!`, 'success');
-            
+
             // Load user-specific data
             loadUserAlerts();
-            
+
         } else {
             showNotification(data.message || 'Invalid credentials. Please try again.', 'error');
         }
@@ -948,25 +965,7 @@ function hideHistoricalDataCard() {
     }
 }
 
-function initializeDateInputs() {
-    const now = new Date();
-    const endDate = new Date(now);
-    const startDate = new Date(now);
-    startDate.setDate(startDate.getDate() - 7); // Default to last 7 days
-    
-    // Format dates for datetime-local input
-    const formatDateForInput = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-    
-    document.getElementById('startDate').value = formatDateForInput(startDate);
-    document.getElementById('endDate').value = formatDateForInput(endDate);
-}
+// Function removed - date inputs no longer needed for simplified PDF generation
 
 async function loadHistoricalData() {
     if (!isLoggedIn) {
@@ -1117,17 +1116,6 @@ function updateReportUI() {
         // User is logged in - show report controls
         if (reportControls) reportControls.style.display = 'block';
         if (loginForReports) loginForReports.style.display = 'none';
-        
-        // Set default dates
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30); // Default to last 30 days
-        
-        const startInput = document.getElementById('startDate');
-        const endInput = document.getElementById('endDate');
-        
-        if (startInput) startInput.value = startDate.toISOString().slice(0, 16);
-        if (endInput) endInput.value = endDate.toISOString().slice(0, 16);
     } else {
         // User is not logged in - show login button
         if (reportControls) reportControls.style.display = 'none';
@@ -1141,65 +1129,24 @@ async function downloadPDFReport() {
         showNotification('Please search for a city first before generating a report', 'error');
         return;
     }
-    
-    const userSession = getUserSession();
-    const isUserLoggedIn = (userSession && userSession.id) || (isLoggedIn && currentUser && currentUser.id);
-    
-    if (!isUserLoggedIn) {
+
+    if (!isLoggedIn || !currentUser || !currentUser.token) {
         showNotification('Please login to download PDF reports', 'error');
         openModal('loginModal');
         return;
     }
-    
-    // Ensure sessionStorage has the authentication data for the API call
-    if (isLoggedIn && currentUser && (!userSession || !userSession.id)) {
-        // Sync sessionStorage with currentUser data if missing
-        const savedUser = localStorage.getItem('skyPulseUser');
-        if (savedUser) {
-            try {
-                const userData = JSON.parse(savedUser);
-                // We need to prompt for password since we can't retrieve it from localStorage
-                showNotification('Please login again to access PDF reports', 'info');
-                openModal('loginModal');
-                return;
-            } catch (e) {
-                showNotification('Authentication error. Please login again.', 'error');
-                openModal('loginModal');
-                return;
-            }
-        }
-    }
-    
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    
-    if (!startDate || !endDate) {
-        showNotification('Please select start and end dates', 'error');
-        return;
-    }
-    
-    if (new Date(startDate) >= new Date(endDate)) {
-        showNotification('Start date must be before end date', 'error');
-        return;
-    }
-    
+
     try {
-        showNotification('Generating PDF report...', 'info');
-        
-        const params = new URLSearchParams({
-            startDate: startDate,
-            endDate: endDate
-        });
-        
-        const response = await fetch(`${API_BASE_URL}/export/pdf/${encodeURIComponent(currentCity)}?${params}`, {
+        showNotification('Generating PDF report for all available data...', 'info');
+
+        const response = await fetch(`${API_BASE_URL}/export/pdf/${encodeURIComponent(currentCity)}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-Id': userSession.id,
-                'Authorization': `Basic ${btoa(userSession.username + ':' + userSession.password)}`
+                'Authorization': `Bearer ${currentUser.token}`
             }
         });
-        
+
         if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -1211,18 +1158,18 @@ async function downloadPDFReport() {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
+
             showNotification('PDF report downloaded successfully!', 'success');
         } else {
             const errorText = await response.text();
             console.error('PDF generation failed:', errorText);
-            
+
             if (response.status === 401) {
                 showNotification('Authentication required. Please login again.', 'error');
                 clearUserSession();
                 updateAuthUI();
             } else if (response.status === 404) {
-                showNotification('No data found for this city in the selected date range', 'error');
+                showNotification('No data found for this city', 'error');
             } else {
                 showNotification('Failed to generate PDF report: ' + errorText, 'error');
             }

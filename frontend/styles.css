@@ -1266,6 +1266,14 @@ body::before {
     border: 1px solid var(--glass-border);
 }
 
+.report-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    text-align: center;
+    opacity: 0.8;
+}
+
 .date-input {
     width: 100%;
     background: rgba(100, 116, 139, 0.1);
