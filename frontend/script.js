@@ -1091,3 +1091,165 @@ async function loadSupportedCities() {
         citiesDiv.innerHTML = '<span class="error-cities">Unable to load cities</span>';
     }
 }
+
+// PDF Report functionality
+function updateReportUI() {
+    const userSession = getUserSession();
+    const reportControls = document.getElementById('reportControls');
+    const loginForReports = document.getElementById('loginForReports');
+    
+    if (userSession && userSession.id) {
+        // User is logged in - show report controls
+        if (reportControls) reportControls.style.display = 'block';
+        if (loginForReports) loginForReports.style.display = 'none';
+        
+        // Set default dates
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30); // Default to last 30 days
+        
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        
+        if (startInput) startInput.value = startDate.toISOString().slice(0, 16);
+        if (endInput) endInput.value = endDate.toISOString().slice(0, 16);
+    } else {
+        // User is not logged in - show login button
+        if (reportControls) reportControls.style.display = 'none';
+        if (loginForReports) loginForReports.style.display = 'block';
+    }
+}
+
+async function downloadPDFReport() {
+    const currentCity = getCurrentCity();
+    if (!currentCity) {
+        showNotification('Please search for a city first before generating a report', 'error');
+        return;
+    }
+    
+    const userSession = getUserSession();
+    if (!userSession || !userSession.id) {
+        showNotification('Please login to download PDF reports', 'error');
+        openModal('loginModal');
+        return;
+    }
+    
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (!startDate || !endDate) {
+        showNotification('Please select start and end dates', 'error');
+        return;
+    }
+    
+    if (new Date(startDate) >= new Date(endDate)) {
+        showNotification('Start date must be before end date', 'error');
+        return;
+    }
+    
+    try {
+        showNotification('Generating PDF report...', 'info');
+        
+        const params = new URLSearchParams({
+            startDate: startDate,
+            endDate: endDate
+        });
+        
+        const response = await fetch(`${API_BASE_URL}/export/pdf/${encodeURIComponent(currentCity)}?${params}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': userSession.id,
+                'Authorization': `Basic ${btoa(userSession.username + ':' + userSession.password)}`
+            }
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `air_quality_report_${currentCity.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showNotification('PDF report downloaded successfully!', 'success');
+        } else {
+            const errorText = await response.text();
+            console.error('PDF generation failed:', errorText);
+            
+            if (response.status === 401) {
+                showNotification('Authentication required. Please login again.', 'error');
+                clearUserSession();
+                updateAuthUI();
+            } else if (response.status === 404) {
+                showNotification('No data found for this city in the selected date range', 'error');
+            } else {
+                showNotification('Failed to generate PDF report: ' + errorText, 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Error downloading PDF:', error);
+        showNotification('Error downloading PDF report', 'error');
+    }
+}
+
+function getCurrentCity() {
+    // Get the current city from the search input or the currently displayed data
+    const searchInput = document.getElementById('citySearch');
+    if (searchInput && searchInput.value.trim()) {
+        return searchInput.value.trim();
+    }
+    
+    // Try to get from the current air quality card
+    const aqiCard = document.querySelector('.aqi-card');
+    if (aqiCard) {
+        const cityElement = aqiCard.querySelector('h2');
+        if (cityElement) {
+            return cityElement.textContent.trim();
+        }
+    }
+    
+    return null;
+}
+
+// Authentication helper functions
+function getUserSession() {
+    const authHeader = sessionStorage.getItem('authorization');
+    const userId = sessionStorage.getItem('userId');
+    
+    if (authHeader && userId) {
+        // Extract username and password from basic auth header
+        const credentials = atob(authHeader.replace('Basic ', ''));
+        const [username, password] = credentials.split(':');
+        
+        return {
+            id: userId,
+            username: username,
+            password: password,
+            authorization: authHeader
+        };
+    }
+    
+    return null;
+}
+
+function clearUserSession() {
+    sessionStorage.removeItem('authorization');
+    sessionStorage.removeItem('userId');
+}
+
+function updateAuthUI() {
+    // Update the reports UI when authentication state changes
+    updateReportUI();
+    
+    // You can add other UI updates here for other auth-dependent features
+}
+
+// Initialize report UI on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateReportUI();
+});
