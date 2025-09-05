@@ -33,11 +33,31 @@ public class PdfGenerationService {
 
     public byte[] generateAirQualityReport(String city, LocalDateTime startDate, LocalDateTime endDate) {
         try {
-            logger.info("Generating PDF report for city: {} from {} to {}", city, startDate, endDate);
-
             // Fetch data from database
-            java.util.List<AqiData> aqiDataList = aqiDataRepository.findByCityAndTimestampBetween(
-                    city, startDate, endDate);
+            java.util.List<AqiData> aqiDataList;
+            
+            if (startDate == null || endDate == null) {
+                // If no date range provided, get all data for the city
+                logger.info("Generating PDF report for city: {} for all available data", city);
+                
+                // Find the actual date range for this city
+                Optional<LocalDateTime> oldestDate = aqiDataRepository.findOldestDateByCity(city);
+                Optional<LocalDateTime> newestDate = aqiDataRepository.findNewestDateByCity(city);
+                
+                if (oldestDate.isPresent() && newestDate.isPresent()) {
+                    startDate = oldestDate.get();
+                    endDate = newestDate.get();
+                    aqiDataList = aqiDataRepository.findByCityAndTimestampBetween(city, startDate, endDate);
+                } else {
+                    // No data for this city
+                    startDate = LocalDateTime.now().minusDays(30);
+                    endDate = LocalDateTime.now();
+                    aqiDataList = new java.util.ArrayList<>();
+                }
+            } else {
+                logger.info("Generating PDF report for city: {} from {} to {}", city, startDate, endDate);
+                aqiDataList = aqiDataRepository.findByCityAndTimestampBetween(city, startDate, endDate);
+            }
 
             if (aqiDataList.isEmpty()) {
                 logger.warn("No data found for city: {} in the specified date range", city);
@@ -528,6 +548,14 @@ public class PdfGenerationService {
 
     private byte[] generateNoDataReport(String city, LocalDateTime startDate, LocalDateTime endDate) {
         try {
+            // Set default date range if not provided
+            if (startDate == null) {
+                startDate = LocalDateTime.now().minusDays(30);
+            }
+            if (endDate == null) {
+                endDate = LocalDateTime.now();
+            }
+            
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(outputStream);
             PdfDocument pdfDoc = new PdfDocument(writer);
