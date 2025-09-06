@@ -570,6 +570,7 @@ function showUserMenu() {
         padding: 1rem;
         min-width: 200px;
         z-index: 1001;
+        display: block !important;
     `;
     
     menu.innerHTML = `
@@ -1242,47 +1243,40 @@ function hideHistoricalDataCard() {
     console.log('Historical data card hidden');
 }
 
-// User menu functionality
-function showUserMenu() {
-    const existingMenu = document.querySelector('.user-menu');
-    if (existingMenu) {
-        existingMenu.remove();
+// Generate Past Data for City (footer button)
+async function generatePastDataForCity() {
+    const mainCityElem = document.getElementById('mainCity');
+    let city = mainCityElem ? mainCityElem.textContent.split(',')[0].trim() : null;
+    
+    if (!city) {
+        showNotification('No city selected. Please select a city first.', 'error');
         return;
     }
     
-    const userMenu = document.createElement('div');
-    userMenu.className = 'user-menu';
-    userMenu.style.cssText = `
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        min-width: 200px;
-        z-index: 1000;
-    `;
+    if (!confirm(`This will generate all available past data for ${city} from OpenAQ API and store it in the database. This may take several minutes. Continue?`)) {
+        return;
+    }
     
-    userMenu.innerHTML = `
-        <div style="margin-bottom: 1rem;">
-            <strong>${currentUser.username}</strong><br>
-            <small>${currentUser.email}</small>
-        </div>
-        <a href="#" onclick="viewProfile()" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
-            <i class="fas fa-user"></i> View Profile
-        </a>
-        <a href="credentials.html" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
-            <i class="fas fa-cog"></i> Manage Profile
-        </a>
-        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
-    `;
-    
-    const loginBtn = document.querySelector('.login-btn');
-    loginBtn.style.position = 'relative';
-    loginBtn.appendChild(userMenu);
+    try {
+        showNotification('Starting data generation for ' + city + '...', 'info');
+        
+        // Call backend endpoint to trigger data generation for all cities (no city-specific endpoint available)
+        const response = await fetch(`${API_BASE_URL}/admin/seed-historical-data?years=2`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Historical data generation started for all cities including ' + city + '. This may take a few minutes.', 'success');
+        } else {
+            showNotification(data.message || 'Failed to start data generation', 'error');
+        }
+    } catch (error) {
+        console.error('Error starting data generation:', error);
+        showNotification('Error starting data generation. Please try again.', 'error');
+    }
 }
 
 // Update last updated time

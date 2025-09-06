@@ -583,7 +583,7 @@ function showUserMenu() {
         <a href="credentials.html" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
             <i class="fas fa-cog"></i> Manage Profile
         </a>
-        <a href="#" onclick="logout()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
+        <a hreh="#" onclick="logout()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     `;
