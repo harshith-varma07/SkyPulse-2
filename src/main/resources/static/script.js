@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load initial data
     loadDashboardData();
+    
+    // Load supported cities for footer
+    loadSupportedCities();
 });
 
 // Load dashboard data from API
@@ -1081,20 +1084,60 @@ async function loadSupportedCities() {
     if (!citiesDiv) return; // Footer might not exist on all pages
     
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/database-status`);
+        const response = await fetch(`${API_BASE_URL}/aqi/cities`);
         const data = await response.json();
 
-        if (data.success && data.availableCities && data.availableCities.length > 0) {
-            const citiesHTML = data.availableCities.map(city => 
+        if (data.success && data.cities && data.cities.length > 0) {
+            const citiesHTML = data.cities.map(city => 
                 `<span class="city-tag">${city}</span>`
             ).join('');
             
-            citiesDiv.innerHTML = citiesHTML;
+            // Preserve the button by appending it after the cities
+            const buttonHTML = '<button class="btn-primary" id="generatePastDataBtn" style="margin-top:1rem;width:100%;" onclick="generatePastDataForCity()"><i class="fas fa-database"></i> Generate Past Data for Selected City</button>';
+            
+            citiesDiv.innerHTML = citiesHTML + buttonHTML;
         } else {
             citiesDiv.innerHTML = '<span class="no-cities">No cities available</span>';
         }
     } catch (error) {
+        console.error('Error loading cities:', error);
         citiesDiv.innerHTML = '<span class="error-cities">Unable to load cities</span>';
+    }
+}
+
+// Generate Past Data for City (footer button)
+async function generatePastDataForCity() {
+    const mainCityElem = document.getElementById('mainCity');
+    let city = mainCityElem ? mainCityElem.textContent.split(',')[0].trim() : null;
+    
+    if (!city) {
+        showNotification('No city selected. Please select a city first.', 'error');
+        return;
+    }
+    
+    if (!confirm(`This will generate all available past data for ${city} from OpenAQ API and store it in the database. This may take several minutes. Continue?`)) {
+        return;
+    }
+    
+    try {
+        showNotification('Starting data generation for ' + city + '...', 'info');
+        
+        // Call backend endpoint to trigger data generation for all cities (no city-specific endpoint available)
+        const response = await fetch(`${API_BASE_URL}/admin/seed-historical-data?years=2`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Historical data generation started for all cities including ' + city + '. This may take a few minutes.', 'success');
+        } else {
+            showNotification(data.message || 'Failed to start data generation', 'error');
+        }
+    } catch (error) {
+        console.error('Error starting data generation:', error);
+        showNotification('Error starting data generation. Please try again.', 'error');
     }
 }
 

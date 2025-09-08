@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .antMatchers("/api/aqi/search").permitAll()
                 .antMatchers("/api/aqi/multiple").permitAll()
                 .antMatchers("/api/aqi/cities/add").permitAll()
+                .antMatchers("/api/admin/seed-historical-data").permitAll() // Allow public access to data seeding
                 .antMatchers("/h2-console/**").permitAll()
                 .antMatchers("/actuator/health").permitAll()
                 
