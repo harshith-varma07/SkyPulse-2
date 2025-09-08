@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load initial data
     loadDashboardData();
+    
+    // Load supported cities for footer
+    loadSupportedCities();
 });
 
 // Load dashboard data from API
@@ -1097,19 +1100,23 @@ async function loadSupportedCities() {
     if (!citiesDiv) return; // Footer might not exist on all pages
     
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/database-status`);
+        const response = await fetch(`${API_BASE_URL}/aqi/cities`);
         const data = await response.json();
 
-        if (data.success && data.availableCities && data.availableCities.length > 0) {
-            const citiesHTML = data.availableCities.map(city => 
+        if (data.success && data.cities && data.cities.length > 0) {
+            const citiesHTML = data.cities.map(city => 
                 `<span class="city-tag">${city}</span>`
             ).join('');
             
-            citiesDiv.innerHTML = citiesHTML;
+            // Preserve the button by appending it after the cities
+            const buttonHTML = '<button class="btn-primary" id="generatePastDataBtn" style="margin-top:1rem;width:100%;" onclick="generatePastDataForCity()"><i class="fas fa-database"></i> Generate Past Data for Selected City</button>';
+            
+            citiesDiv.innerHTML = citiesHTML + buttonHTML;
         } else {
             citiesDiv.innerHTML = '<span class="no-cities">No cities available</span>';
         }
     } catch (error) {
+        console.error('Error loading cities:', error);
         citiesDiv.innerHTML = '<span class="error-cities">Unable to load cities</span>';
     }
 }
