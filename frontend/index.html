@@ -134,6 +134,32 @@
                 </div>
             </div>
 
+            <!-- Historical Data Card -->
+            <div class="card" id="historicalDataCard">
+                <h3><i class="fas fa-database"></i> Historical Data Management</h3>
+                <div class="historical-data-info">
+                    <div class="access-section">
+                        <div class="access-type admin">
+                            <i class="fas fa-chart-line"></i>
+                            <h4>Generate Historical Data</h4>
+                            <p class="feature-description">Generate and import past air quality data for the currently selected city from OpenAQ API.</p>
+                            <ul>
+                                <li>Import up to 2 years of historical data</li>
+                                <li>Data from reliable OpenAQ sources</li>
+                                <li>Enhances trend analysis capabilities</li>
+                                <li>Supports better forecasting</li>
+                            </ul>
+                            <div class="data-controls" id="dataControls">
+                                <button class="btn-primary" onclick="generatePastDataForCity()" id="generatePastDataBtn">
+                                    <i class="fas fa-database"></i> Generate Past Data for Selected City
+                                </button>
+                                <p class="data-info">This will fetch and store historical air quality data for the currently selected city. This operation may take several minutes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Alerts Card -->
             <div class="card">
                 <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
@@ -252,9 +278,6 @@
                     <div class="loading-cities">
                         <i class="fas fa-spinner fa-spin"></i> Loading cities...
                     </div>
-                <button class="btn-primary" id="generatePastDataBtn" style="margin-top:1rem;width:100%;" onclick="generatePastDataForCity()">
-                    <i class="fas fa-database"></i> Generate Past Data for Selected City
-                </button>
                 </div>
             </div>
             <div class="footer-section">

@@ -573,6 +573,7 @@ function showUserMenu() {
         padding: 1rem;
         min-width: 200px;
         z-index: 1001;
+        display: block !important;
     `;
     
     menu.innerHTML = `
@@ -586,7 +587,7 @@ function showUserMenu() {
         <a href="credentials.html" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
             <i class="fas fa-cog"></i> Manage Profile
         </a>
-        <a hreh="#" onclick="logout()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
+        <a href="#" onclick="logout()" style="display: block; padding: 0.5rem 0; color: var(--text-primary); text-decoration: none;">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     `;
@@ -625,6 +626,21 @@ function viewAlerts() {
     if (alertSection) {
         alertSection.scrollIntoView({ behavior: 'smooth' });
         showNotification('Your alerts are displayed in the panel below', 'info');
+    }
+}
+
+// View profile function
+function viewProfile() {
+    const userMenu = document.querySelector('.user-menu');
+    if (userMenu) {
+        userMenu.remove();
+    }
+    
+    // Show user profile information
+    if (currentUser) {
+        showNotification(`Profile: ${currentUser.username} (${currentUser.email})`, 'info');
+    } else {
+        showNotification('User profile not available', 'error');
     }
 }
 
@@ -1092,52 +1108,13 @@ async function loadSupportedCities() {
                 `<span class="city-tag">${city}</span>`
             ).join('');
             
-            // Preserve the button by appending it after the cities
-            const buttonHTML = '<button class="btn-primary" id="generatePastDataBtn" style="margin-top:1rem;width:100%;" onclick="generatePastDataForCity()"><i class="fas fa-database"></i> Generate Past Data for Selected City</button>';
-            
-            citiesDiv.innerHTML = citiesHTML + buttonHTML;
+            citiesDiv.innerHTML = citiesHTML;
         } else {
             citiesDiv.innerHTML = '<span class="no-cities">No cities available</span>';
         }
     } catch (error) {
         console.error('Error loading cities:', error);
         citiesDiv.innerHTML = '<span class="error-cities">Unable to load cities</span>';
-    }
-}
-
-// Generate Past Data for City (footer button)
-async function generatePastDataForCity() {
-    const mainCityElem = document.getElementById('mainCity');
-    let city = mainCityElem ? mainCityElem.textContent.split(',')[0].trim() : null;
-    
-    if (!city) {
-        showNotification('No city selected. Please select a city first.', 'error');
-        return;
-    }
-    
-    if (!confirm(`This will generate all available past data for ${city} from OpenAQ API and store it in the database. This may take several minutes. Continue?`)) {
-        return;
-    }
-    
-    try {
-        showNotification('Starting data generation for ' + city + '...', 'info');
-        
-        // Call backend endpoint to trigger data generation for all cities (no city-specific endpoint available)
-        const response = await fetch(`${API_BASE_URL}/admin/seed-historical-data?years=2`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification('Historical data generation started for all cities including ' + city + '. This may take a few minutes.', 'success');
-        } else {
-            showNotification(data.message || 'Failed to start data generation', 'error');
-        }
-    } catch (error) {
-        console.error('Error starting data generation:', error);
-        showNotification('Error starting data generation. Please try again.', 'error');
     }
 }
 
@@ -1270,47 +1247,66 @@ function hideHistoricalDataCard() {
     console.log('Historical data card hidden');
 }
 
-// User menu functionality
-function showUserMenu() {
-    const existingMenu = document.querySelector('.user-menu');
-    if (existingMenu) {
-        existingMenu.remove();
+// Generate Past Data for City (footer button)
+async function generatePastDataForCity() {
+    const mainCityElem = document.getElementById('mainCity');
+    let city = mainCityElem ? mainCityElem.textContent.split(',')[0].trim() : null;
+    
+    if (!city) {
+        showNotification('No city selected. Please select a city first by searching for one above.', 'error');
         return;
     }
     
-    const userMenu = document.createElement('div');
-    userMenu.className = 'user-menu';
-    userMenu.style.cssText = `
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        min-width: 200px;
-        z-index: 1000;
-    `;
+    if (!confirm(`This will generate historical air quality data for ${city} and all other cities from OpenAQ API. This operation may take several minutes and will run in the background. Continue?`)) {
+        return;
+    }
     
-    userMenu.innerHTML = `
-        <div style="margin-bottom: 1rem;">
-            <strong>${currentUser.username}</strong><br>
-            <small>${currentUser.email}</small>
-        </div>
-        <a href="#" onclick="viewProfile()" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
-            <i class="fas fa-user"></i> View Profile
-        </a>
-        <a href="credentials.html" style="display: block; padding: 0.5rem; text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">
-            <i class="fas fa-cog"></i> Manage Profile
-        </a>
-        <button onclick="logout()" style="width: 100%; background: var(--accent-color); color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
-    `;
-    
-    const loginBtn = document.querySelector('.login-btn');
-    loginBtn.style.position = 'relative';
-    loginBtn.appendChild(userMenu);
+    try {
+        // Show loading state
+        const generateBtn = document.getElementById('generatePastDataBtn');
+        const originalText = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Data...';
+        generateBtn.disabled = true;
+        
+        showNotification('Starting historical data generation for ' + city + '...', 'info');
+        
+        // Call backend endpoint to trigger data generation
+        const response = await fetch(`${API_BASE_URL}/admin/seed-historical-data?years=2`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Historical data generation started successfully! This will generate data for ${city} and other cities. The process may take a few minutes to complete.`, 'success');
+            
+            // Show progress info if available
+            if (data.estimatedNewRecords) {
+                setTimeout(() => {
+                    showNotification(`Estimated ${data.estimatedNewRecords} new records will be generated. Check back in a few minutes.`, 'info');
+                }, 2000);
+            }
+        } else {
+            throw new Error(data.message || 'Failed to start data generation');
+        }
+    } catch (error) {
+        console.error('Error starting data generation:', error);
+        showNotification('Error starting data generation: ' + error.message, 'error');
+    } finally {
+        // Restore button state
+        const generateBtn = document.getElementById('generatePastDataBtn');
+        if (generateBtn) {
+            generateBtn.innerHTML = '<i class="fas fa-database"></i> Generate Past Data for Selected City';
+            generateBtn.disabled = false;
+        }
+    }
 }
 
 // Update last updated time

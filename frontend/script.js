@@ -1108,10 +1108,7 @@ async function loadSupportedCities() {
                 `<span class="city-tag">${city}</span>`
             ).join('');
             
-            // Preserve the button by appending it after the cities
-            const buttonHTML = '<button class="btn-primary" id="generatePastDataBtn" style="margin-top:1rem;width:100%;" onclick="generatePastDataForCity()"><i class="fas fa-database"></i> Generate Past Data for Selected City</button>';
-            
-            citiesDiv.innerHTML = citiesHTML + buttonHTML;
+            citiesDiv.innerHTML = citiesHTML;
         } else {
             citiesDiv.innerHTML = '<span class="no-cities">No cities available</span>';
         }
@@ -1256,33 +1253,59 @@ async function generatePastDataForCity() {
     let city = mainCityElem ? mainCityElem.textContent.split(',')[0].trim() : null;
     
     if (!city) {
-        showNotification('No city selected. Please select a city first.', 'error');
+        showNotification('No city selected. Please select a city first by searching for one above.', 'error');
         return;
     }
     
-    if (!confirm(`This will generate all available past data for ${city} from OpenAQ API and store it in the database. This may take several minutes. Continue?`)) {
+    if (!confirm(`This will generate historical air quality data for ${city} and all other cities from OpenAQ API. This operation may take several minutes and will run in the background. Continue?`)) {
         return;
     }
     
     try {
-        showNotification('Starting data generation for ' + city + '...', 'info');
+        // Show loading state
+        const generateBtn = document.getElementById('generatePastDataBtn');
+        const originalText = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Data...';
+        generateBtn.disabled = true;
         
-        // Call backend endpoint to trigger data generation for all cities (no city-specific endpoint available)
+        showNotification('Starting historical data generation for ' + city + '...', 'info');
+        
+        // Call backend endpoint to trigger data generation
         const response = await fetch(`${API_BASE_URL}/admin/seed-historical-data?years=2`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json'
+            }
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         
         const data = await response.json();
         
         if (data.success) {
-            showNotification('Historical data generation started for all cities including ' + city + '. This may take a few minutes.', 'success');
+            showNotification(`Historical data generation started successfully! This will generate data for ${city} and other cities. The process may take a few minutes to complete.`, 'success');
+            
+            // Show progress info if available
+            if (data.estimatedNewRecords) {
+                setTimeout(() => {
+                    showNotification(`Estimated ${data.estimatedNewRecords} new records will be generated. Check back in a few minutes.`, 'info');
+                }, 2000);
+            }
         } else {
-            showNotification(data.message || 'Failed to start data generation', 'error');
+            throw new Error(data.message || 'Failed to start data generation');
         }
     } catch (error) {
         console.error('Error starting data generation:', error);
-        showNotification('Error starting data generation. Please try again.', 'error');
+        showNotification('Error starting data generation: ' + error.message, 'error');
+    } finally {
+        // Restore button state
+        const generateBtn = document.getElementById('generatePastDataBtn');
+        if (generateBtn) {
+            generateBtn.innerHTML = '<i class="fas fa-database"></i> Generate Past Data for Selected City';
+            generateBtn.disabled = false;
+        }
     }
 }
 
