@@ -1,5 +1,6 @@
 package com.air.airquality.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +36,7 @@ public class User {
     private LocalDateTime updatedAt;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<UserAlert> alerts;
     
     // Constructors, getters, and setters
